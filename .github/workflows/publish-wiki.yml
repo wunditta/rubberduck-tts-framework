@@ -1,28 +1,17 @@
-name: Publish wiki
+name: Update wiki
 on:
   workflow_dispatch:
   push:
-    branches: [main]
-    paths: [wiki/**, .github/workflows/publish-wiki.yml]
-concurrency:
-  group: wiki
-  cancel-in-progress: true
-permissions:
-  contents: write
+    paths:
+      - 'wiki/**'
+    branches:
+      - master
 jobs:
-  wiki:
+  update-wiki:
     runs-on: ubuntu-latest
+    name: Update wiki
     steps:
-      - uses: actions/checkout@v3
-      - uses: spenserblack/actions-wiki@v0.3.0
-        with:
-          # The repository housing the wiki. Use this if you're publishing to a wiki that's not the current repository. You can include a domain prefix if you have a hosted GitHub instance that you want to push to. Default is github.repository with the implicit github.com domain (github.com/${{ github.repository }}).
-          repository: # default
-          # github.token is the default. This token is used when cloning and pushing wiki changes.
-          token: ${{ secrets.GITHUB_TOKEN }} # default is ${{ github.token }}
-          # The directory to use for your wiki contents. Whatever directory you choose will be mirrored to the GitHub .wiki.git. The default is .github/wiki.
-          path: wiki
-          # The message to use when committing new content. Default is Update wiki github.sha. You probably don't need to change this, since this only applies if you look really closely in your wiki.
-          commit-message: # default is Update wiki ${{ github.sha }}
-          # Whether or not to actually attempt to push changes back to the wiki itself. If this is set to true, we instead print the remote URL and do not push to the remote wiki. The default is false. This is useful for testing.
-          dry-run: 
+    - uses: OrlovM/Wiki-Action@v1
+      with:
+        path: 'wiki'
+        token: ${{ secrets.GITHUB_TOKEN }}
