@@ -1,0 +1,15 @@
+- name: Wiki Update
+  # You may pin to the exact commit or the version.
+  # uses: spenserblack/actions-wiki@d1c7c54ece09cda5d214267b07241c8f725c671e
+  uses: spenserblack/actions-wiki@v0.3.0
+  with:
+    # The repository housing the wiki. Use this if you're publishing to a wiki that's not the current repository. You can include a domain prefix if you have a hosted GitHub instance that you want to push to. Default is github.repository with the implicit github.com domain.
+    repository: # default is github.com/${{ github.repository }}
+    # github.token is the default. This token is used when cloning and pushing wiki changes.
+    token: # default is ${{ github.token }}
+    # The directory to use for your wiki contents. Default .github/wiki.
+    path: # default is .github/wiki
+    # The message to use when committing new content. Default is Update wiki github.sha. You probably don't need to change this, since this only applies if you look really closely in your wiki.
+    commit-message: # default is Update wiki ${{ github.sha }}
+    # Whether or not to actually attempt to push changes back to the wiki itself. If this is set to true, we instead print the remote URL and do not push to the remote wiki. The default is false. This is useful for testing.
+    dry-run: 
