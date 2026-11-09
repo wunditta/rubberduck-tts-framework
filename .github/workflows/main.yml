@@ -18,7 +18,7 @@ jobs:
           # github.token is the default. This token is used when cloning and pushing wiki changes.
           token: # default is ${{ github.token }}
           # The directory to use for your wiki contents. Default .github/wiki.
-          path: # default is .github/wiki
+          path: wiki
           # The message to use when committing new content. Default is Update wiki github.sha. You probably don't need to change this, since this only applies if you look really closely in your wiki.
           commit-message: # default is Update wiki ${{ github.sha }}
           # Whether or not to actually attempt to push changes back to the wiki itself. If this is set to true, we instead print the remote URL and do not push to the remote wiki. The default is false. This is useful for testing.
