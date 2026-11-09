@@ -17,7 +17,7 @@ jobs:
       - uses: spenserblack/actions-wiki@v0.3.0
         with:
           # The repository housing the wiki. Use this if you're publishing to a wiki that's not the current repository. You can include a domain prefix if you have a hosted GitHub instance that you want to push to. Default is github.repository with the implicit github.com domain (github.com/${{ github.repository }}).
-          repository: # default
+          repository: github.com/rubberduck-tts-framework
           # github.token is the default. This token is used when cloning and pushing wiki changes.
           token: # default is ${{ github.token }}
           # The directory to use for your wiki contents. Whatever directory you choose will be mirrored to the GitHub .wiki.git. The default is .github/wiki.
