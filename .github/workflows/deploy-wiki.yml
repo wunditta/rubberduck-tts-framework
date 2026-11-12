@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Expand badges and shorthands # written by Claude & wunditta
-        run: python3 .github/scripts/badges.py "$WIKI_PATH"
+        run: python3 .github/badges.py "$WIKI_PATH"
       - uses: actions4gh/configure-wiki@v1
         with:
           path: ${{ env.WIKI_PATH }}
