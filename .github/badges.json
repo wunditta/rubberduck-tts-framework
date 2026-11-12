@@ -18,7 +18,12 @@
     },
     "modulecolor": "#ececec",
     "modules": {
-        "core": "#ececec"
+        "core": "#666666",
+        "dev": "#000000",
+        "dialog": "#",
+        "object": "#1445B7",
+        "statemachine": "#1489B7",
+        "workflow": "#78B313"
     },
     "badge": {
         "height": 18,
