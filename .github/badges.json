@@ -27,7 +27,9 @@
         "workflow": "#78B313"
     },
     "badge": {
-        "height": 14,
+        "height": 16,
+        "codeHeight": 16,
+        "//codeHeight": "The height of the badges within code (set to same as height to make all badges equal size)",
         "fontSize": 0.8,
         "radius": 0.25,
         "padding": 0.16,
@@ -56,7 +58,6 @@
         },
         "charWidth": 0.62,
         "textMargin": 0.08,
-        "codeHeight": 12,
         "altGap": "&thinsp;",
         "altGapCode": "",
         "tableMinWidth": true
