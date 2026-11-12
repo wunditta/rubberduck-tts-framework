@@ -32,7 +32,7 @@ CHARWIDTH = float(B.get("charWidth", 0.62))      # fallback glyph width (multipl
 CODEHEIGHT = int(B.get("codeHeight", 16))        # px; badges inside code spans (GitHub renders code at 85% of the body size)
 MARGIN = float(B.get("textMargin", 0.08))        # safety margin on the measured text width (multiple of the font size) - room for fallback fonts
 ALTGAP = B.get("altGap", "&thinsp;")             # between the badges of alternatives ([str/num])
-TABLEMIN = B.get("tableMinWidth", True)          # table cells holding only badges get invisible non-breaking spaces as wide as the badges, so the column cannot shrink them
+TABLEMIN = B.get("tableMinWidth", True)          # a column of badge-only cells gets its header widened with &nbsp; to the widest badge, so the column cannot shrink the images
 LASTWIDTH = {}                                   # file name -> badge width in px (for TABLEMIN)
 # Verdana advance widths in 1/2048 em (from the font's metrics); the text is centred, so a small error only moves the padding
 VERDANA = {}
@@ -168,24 +168,38 @@ def convert_text(text, pages):
 
 CELL_IMG = re.compile(r'<img alt="[^"]*" src="[^"]*/([^"/]+\.svg)"[^>]*>')
 
-def pad_table_cells(line):
-    """| <badge> | text | -> the badge cell gets &nbsp; runs as wide as its badges (a non-breaking space is ~0.28 em)"""
-    if not line.lstrip().startswith("|"):
-        return line
-    cells = line.split("|")
-    for i, cell in enumerate(cells):
-        inner = cell.strip()
-        if not inner:
+def badge_only_width(cell):
+    """width in px of the badges in a cell that holds nothing but badges, else 0"""
+    inner = cell.strip()
+    if not inner:
+        return 0
+    rest = CELL_IMG.sub("", inner)
+    rest = re.sub(r"</?a[^>]*>|&thinsp;", "", rest).strip()
+    if rest:
+        return 0                                      # the cell holds text as well: that already gives it a width
+    return sum(LASTWIDTH.get(m.group(1), 0) for m in CELL_IMG.finditer(inner))
+
+def pad_table(lines):
+    """a whole table (header, separator, rows): a column holding badge-only cells gets its header cell widened with
+    &nbsp; on both sides (one is ~0.28 em) until it is as wide as the widest badge cell, so the column cannot shrink
+    the images; the rows themselves stay untouched and the header text stays centred"""
+    if len(lines) < 3:
+        return lines
+    rows = [l.split("|") for l in lines]
+    head = rows[0]
+    for i in range(len(head)):
+        text = head[i].strip()
+        if not text:
             continue
-        rest = CELL_IMG.sub("", inner)
-        rest = re.sub(r"</?a[^>]*>|&thinsp;", "", rest).strip()
-        if rest:
-            continue                                  # the cell holds text as well: that already gives it a width
-        width = sum(LASTWIDTH.get(m.group(1), 0) for m in CELL_IMG.finditer(inner))
-        if width:
-            n = int(width / (HEIGHT * 0.28)) + 1
-            cells[i] = cell.rstrip() + "&nbsp;" * n + " "
-    return "|".join(cells)
+        widest = max((badge_only_width(r[i]) for r in rows[2:] if i < len(r)), default=0)
+        have = text_width(re.sub(r"[*_`]", "", text), 16)       # the header text at GitHub's body size (bold: roughly)
+        if widest <= have:
+            continue
+        n = int((widest - have) / (16 * 0.28)) + 2
+        half = "&nbsp;" * ((n + 1) // 2)
+        head[i] = " " + half + text + half + " "
+    lines[0] = "|".join(head)
+    return lines
 
 def convert_file(path, pages):
     src = path.read_text(encoding="utf-8")
@@ -205,10 +219,19 @@ def convert_file(path, pages):
         if IN_CODE:
             for i in range(1, len(parts), 2):
                 parts[i] = convert_code_span(parts[i])
-        joined = "".join(parts)
-        if TABLEMIN:
-            joined = pad_table_cells(joined)
-        out.append(joined)
+        out.append("".join(parts))
+    if TABLEMIN:
+        # tables as blocks: consecutive lines starting with "|"
+        i = 0
+        while i < len(out):
+            if out[i].lstrip().startswith("|"):
+                j = i
+                while j < len(out) and out[j].lstrip().startswith("|"):
+                    j += 1
+                out[i:j] = pad_table(out[i:j])
+                i = j
+            else:
+                i += 1
     new = "\n".join(out)
     if new != src:
         path.write_text(new, encoding="utf-8")
