@@ -9,7 +9,7 @@
         "any": "#e0e270",
         "var": "#e0e270",
         "tab": "#c1c1c1",
-        "func": "#de4816",
+        "func": "#E07551",
         "obj": "#b1bfe0",
         "guid": "#b1bfe0",
         "vec": "#f4d29a",
@@ -18,7 +18,7 @@
     },
     "modulecolor": "#ececec",
     "modules": {
-        "addons": "#B7A114",
+        "addons": "#89790F",
         "core": "#666666",
         "dev": "#000000",
         "dialog": "#",
