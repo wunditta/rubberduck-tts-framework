@@ -27,7 +27,8 @@ FONTSIZE = float(B.get("fontSize", 0.9))         # multiple of the height
 RADIUS = float(B.get("radius", 0.25))            # multiple of the height
 PADDING = float(B.get("padding", 0.16))          # multiple of the height, left and right
 FONT = B.get("font", "Verdana, DejaVu Sans, sans-serif")
-TEXTCOLOR = B.get("textColor", "#000000")
+TEXTCOLOR = B.get("textColor", "#000000")        # text colour of the type badges
+MODTEXTCOLOR = B.get("moduleTextColor", TEXTCOLOR)  # text colour of the module badges (default: textColor)
 CHARWIDTH = float(B.get("charWidth", 0.62))      # fallback glyph width (multiple of the font size) for characters not in VERDANA
 CODEHEIGHT = int(B.get("codeHeight", 16))        # px; badges inside code spans (GitHub renders code at 85% of the body size)
 MARGIN = float(B.get("textMargin", 0.08))        # safety margin on the measured text width (multiple of the font size) - room for fallback fonts
@@ -94,7 +95,7 @@ def badge_file(text, fill, with_icon=False, height=None):
         svg = (f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{total}" viewBox="0 0 {w} {total}" role="img" aria-label="{text}">'
                f'<g transform="translate(0,{top})"><rect width="{w}" height="{H}" rx="{r}" fill="{fill}"/>{icon}'
                f'<text x="{left + tw/2:.1f}" y="{H/2 + fs*BASELINE:.1f}" text-anchor="middle" '
-               f'font-family="{FONT}" font-size="{fs:.1f}" fill="{TEXTCOLOR}">{html_escape(text)}</text></g></svg>')
+               f'font-family="{FONT}" font-size="{fs:.1f}" fill="{MODTEXTCOLOR if with_icon else TEXTCOLOR}">{html_escape(text)}</text></g></svg>')
         name = re.sub(r"[^A-Za-z0-9]+", "-", text.replace("{}", "-tab")).strip("-") + "-" + fill.lstrip("#") + ("-m" if with_icon else "") + (f"-{H}" if H != HEIGHT else "") + ".svg"
         (WIKI / BADGEDIR).mkdir(parents=True, exist_ok=True)
         (WIKI / BADGEDIR / name).write_text(svg, encoding="utf-8")
