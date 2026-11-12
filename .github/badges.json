@@ -19,7 +19,6 @@
         "padding": 0.16,
         "font": "Verdana, DejaVu Sans, sans-serif",
         "textColor": "#000000",
-        "charWidth": 0.62,
         "baseline": 0.37,
         "dir": "badges",
         "align": "texttop",
@@ -37,7 +36,11 @@
             "gap": 0.12,
             "color": "#d9690b"
         },
-        "shift": 0
+        "shift": 0,
+        "charWidth": 0.62,
+        "textMargin": 0.08,
+        "codeHeight": 16,
+        "altGap": "&thinsp;"
     },
     "badgesInCodeSpans": true,
     "externalLinksToHtml": true
