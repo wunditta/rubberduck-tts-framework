@@ -7,28 +7,77 @@ Configuration: .github/badges.json (types and colours, module colour, style).
 What is converted (outside fenced code blocks and code spans):
   [str] [num{}] [str/tab] ...        a type token: every alternative (split by "/") must be a known type from badges.json,
                                      "{}" suffixes mean "table of"; unknown tokens are left as they are
+                                     the badges are SVG files the script writes into <wiki>/badges/ (look: "badge" in badges.json)
   [**name**](name.md) / (./name)     a module link whose page wiki/name.md exists: badge that links to the page
   [text](https://...)                an external link becomes an HTML <a> (optional, externalLinksToHtml): the configure-wiki
                                      action crashes on absolute URLs in Markdown links, HTML passes through untouched
 """
-import json, re, sys, pathlib, urllib.parse
+import json, re, sys, pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 CFG = json.loads((ROOT / ".github" / "badges.json").read_text(encoding="utf-8"))
 TYPES = CFG["types"]
-STYLE = CFG.get("style", "flat-square")
-MODCOLOR = CFG.get("modulecolor", "d4a017")
+MODCOLOR = CFG.get("modulecolor", "#d4a017")
 EXT2HTML = CFG.get("externalLinksToHtml", True)
 IN_CODE = CFG.get("badgesInCodeSpans", True)     # code spans with type tokens become <code> with badges (fenced blocks never)
-TYPE_LABEL = CFG.get("typeLabel", "")            # "" = label-less badge (just the type name), like the TTS API docs
+B = CFG.get("badge", {})
+HEIGHT = int(B.get("height", 18))                # px; the text inside is fontSize * height
+FONTSIZE = float(B.get("fontSize", 0.9))         # multiple of the height
+RADIUS = float(B.get("radius", 0.25))            # multiple of the height
+PADDING = float(B.get("padding", 0.16))          # multiple of the height, left and right
+FONT = B.get("font", "Verdana, DejaVu Sans, sans-serif")
+TEXTCOLOR = B.get("textColor", "#000000")
+CHARWIDTH = float(B.get("charWidth", 0.62))      # average glyph width as a multiple of the font size (Verdana ~0.62)
+BASELINE = float(B.get("baseline", 0.25))        # baseline below the badge centre, as a multiple of the font size (centres the x-height)
+BADGEDIR = B.get("dir", "badges")                # folder inside the wiki folder that receives the SVG files
+ALIGN = B.get("align", "middle")                 # <img align=...>: GitHub strips style attributes but keeps align
+ICON = B.get("icon")                             # module badges: {"path": svg path data, "box": [x, y, w, h] of the path, "rotate": 90, "height": 0.84, "padding": 0.2, "gap": 0.12, "color": "#d9690b"}
+WIKI = None                                      # set in main(): the wiki folder
+WRITTEN = {}                                     # text,fill -> file name
 
-def esc(s):
-    return s.replace("-", "--").replace("_", "__").replace(" ", "_")
+def icon_svg(x0):
+    """the module icon at x0 (left edge), vertically centred; returns (svg fragment, width)"""
+    bx, by, bw, bh = ICON["box"]
+    rot = ICON.get("rotate", 0)
+    # size of the icon after the rotation (90/270 swap width and height)
+    pw, ph = (bh, bw) if rot % 180 == 90 else (bw, bh)
+    ih = HEIGHT * float(ICON.get("height", 0.84))
+    sc = ih / ph
+    iw = pw * sc
+    y0 = (HEIGHT - ih) / 2
+    # move the path's box to the origin, rotate about the origin, shift the rotated box to positive coordinates, then scale and place
+    if rot % 360 == 90:    post = f"translate({bh},0) rotate(90)"
+    elif rot % 360 == 270: post = f"translate(0,{bw}) rotate(-90)"
+    elif rot % 360 == 180: post = f"translate({bw},{bh}) rotate(180)"
+    else:                  post = ""
+    tf = f"translate({x0:.2f},{y0:.2f}) scale({sc:.5f}) {post} translate({-bx},{-by})"
+    return f'<path d="{ICON["path"]}" fill="{ICON.get("color", TEXTCOLOR)}" transform="{tf}"/>', iw
 
-def shield(label, text, color):
-    label = urllib.parse.quote(esc(label), safe="")      # "" gives a label-less badge: badge/-text-color
-    text = urllib.parse.quote(esc(text), safe="/")
-    return f"https://img.shields.io/badge/{label}-{text}-{color}?style={STYLE}"
+def badge_file(text, fill, with_icon=False):
+    """write (once) the SVG for this text/colour into <wiki>/<dir>/ and return its URL for <img src>"""
+    key = (text, fill, with_icon)
+    if key not in WRITTEN:
+        fs = HEIGHT * FONTSIZE
+        tw = round(len(text) * fs * CHARWIDTH, 1)
+        pad = HEIGHT * PADDING
+        icon, iw, left = "", 0.0, pad
+        if with_icon and ICON:
+            icon, iw = icon_svg(HEIGHT * float(ICON.get("padding", 0.2)))
+            left = HEIGHT * float(ICON.get("padding", 0.2)) + iw + HEIGHT * float(ICON.get("gap", 0.12))
+        w = round(left + tw + pad, 1)
+        r = round(HEIGHT * RADIUS, 1)
+        svg = (f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{HEIGHT}" viewBox="0 0 {w} {HEIGHT}" role="img" aria-label="{text}">'
+               f'<rect width="{w}" height="{HEIGHT}" rx="{r}" fill="{fill}"/>{icon}'
+               f'<text x="{left + tw/2:.1f}" y="{HEIGHT/2 + fs*BASELINE:.1f}" text-anchor="middle" '
+               f'font-family="{FONT}" font-size="{fs:.1f}" fill="{TEXTCOLOR}" textLength="{tw}" lengthAdjust="spacingAndGlyphs">{html_escape(text)}</text></svg>')
+        name = re.sub(r"[^A-Za-z0-9]+", "-", text.replace("{}", "-tab")).strip("-") + "-" + fill.lstrip("#") + ("-m" if with_icon else "") + ".svg"
+        (WIKI / BADGEDIR).mkdir(parents=True, exist_ok=True)
+        (WIKI / BADGEDIR / name).write_text(svg, encoding="utf-8")
+        WRITTEN[key] = name
+    return f"{BADGEDIR}/{WRITTEN[key]}"
+
+def img(text, fill, with_icon=False):
+    return f'<img alt="{text}" src="{badge_file(text, fill, with_icon)}" height="{HEIGHT}" align="{ALIGN}">'
 
 def html_escape(s):
     return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
@@ -62,11 +111,11 @@ def type_badges(inner):
         if base not in TYPES:
             return None
         text = base + suf
-        out.append(f'<img alt="{text}" src="{shield(TYPE_LABEL, text, TYPES[base])}">')
+        out.append(img(text, TYPES[base]))
     return "".join(out)
 
 def module_badge(name):
-    return f'<a href="./{name}"><img alt="{name}" src="{shield("module", name, MODCOLOR)}"></a>'
+    return f'<a href="./{name}">{img(name, MODCOLOR, True)}</a>'
 
 TYPE_TOKEN = re.compile(r"\[([a-zA-Z/{}]+)\](?![(\[])")
 MODULE_LINK = re.compile(r"\[\*\*`?([A-Za-z0-9_-]+)`?\*\*\]\((?:\./)?([A-Za-z0-9_-]+)(?:\.md)?\)")
@@ -114,7 +163,9 @@ def convert_file(path, pages):
         print(f"badges: converted {path}")
 
 def main():
+    global WIKI
     wiki = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else "wiki")
+    WIKI = wiki
     pages = {p.stem for p in wiki.glob("*.md")}
     for p in sorted(wiki.glob("*.md")):
         convert_file(p, pages)
