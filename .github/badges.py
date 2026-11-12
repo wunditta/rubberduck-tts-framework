@@ -131,7 +131,14 @@ def convert_code_span(span):
     return "<code>" + "".join(pieces) + "</code>"
 
 def type_badges(inner, height=None):
-    """[str/num{}] -> HTML of one badge per alternative, or None if any base is unknown."""
+    """[str/num{}] -> HTML of one badge per alternative, or None if any base is unknown.
+    [(str/tab){}] -> one badge "str/tab{}" (a table whose items are strings or tables), coloured like a table."""
+    g = GROUP_TOKEN.fullmatch(inner)
+    if g:
+        bases = g.group(1).split("/")
+        if any(b not in TYPES for b in bases) or "tab" not in TYPES:
+            return None
+        return img(g.group(1) + g.group(2), TYPES["tab"], False, height)
     out = []
     for part in inner.split("/"):
         base, suf = part, ""
@@ -146,7 +153,8 @@ def type_badges(inner, height=None):
 def module_badge(name):
     return f'<a href="./{name}">{img(name, MODCOLORS.get(name, MODCOLOR), True)}</a>'
 
-TYPE_TOKEN = re.compile(r"\[([a-zA-Z/{}]+)\](?![(\[])")
+TYPE_TOKEN = re.compile(r"\[((?:[a-zA-Z/{}]+|\([a-zA-Z/]+\)(?:\{\})+))\](?![(\[])")
+GROUP_TOKEN = re.compile(r"\(([a-zA-Z/]+)\)((?:\{\})+)")
 MODULE_LINK = re.compile(r"\[\*\*`?([A-Za-z0-9_-]+)`?\*\*\]\((?:\./)?([A-Za-z0-9_-]+)(?:\.md)?\)")
 EXT_LINK = re.compile(r"(?<!!)\[([^\]]+)\]\((https?://[^)\s]+)\)")
 
