@@ -28,9 +28,10 @@ PADDING = float(B.get("padding", 0.16))          # multiple of the height, left 
 FONT = B.get("font", "Verdana, DejaVu Sans, sans-serif")
 TEXTCOLOR = B.get("textColor", "#000000")
 CHARWIDTH = float(B.get("charWidth", 0.62))      # average glyph width as a multiple of the font size (Verdana ~0.62)
-BASELINE = float(B.get("baseline", 0.25))        # baseline below the badge centre, as a multiple of the font size (centres the x-height)
+BASELINE = float(B.get("baseline", 0.37))        # baseline below the badge centre, as a multiple of the font size (centres the x-height)
 BADGEDIR = B.get("dir", "badges")                # folder inside the wiki folder that receives the SVG files
-ALIGN = B.get("align", "middle")                 # <img align=...>: GitHub strips style attributes but keeps align
+ALIGN = B.get("align", "texttop")                # <img align=...>: GitHub strips style attributes but keeps align (baseline, middle, absmiddle, absbottom, texttop, top, bottom)
+SHIFT = float(B.get("shift", 0))                 # transparent band added to the image, as a multiple of the height: >0 below (the badge moves up), <0 above (moves down)
 ICON = B.get("icon")                             # module badges: {"path": svg path data, "box": [x, y, w, h] of the path, "rotate": 90, "height": 0.84, "padding": 0.2, "gap": 0.12, "color": "#d9690b"}
 WIKI = None                                      # set in main(): the wiki folder
 WRITTEN = {}                                     # text,fill -> file name
@@ -66,10 +67,13 @@ def badge_file(text, fill, with_icon=False):
             left = HEIGHT * float(ICON.get("padding", 0.2)) + iw + HEIGHT * float(ICON.get("gap", 0.12))
         w = round(left + tw + pad, 1)
         r = round(HEIGHT * RADIUS, 1)
-        svg = (f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{HEIGHT}" viewBox="0 0 {w} {HEIGHT}" role="img" aria-label="{text}">'
-               f'<rect width="{w}" height="{HEIGHT}" rx="{r}" fill="{fill}"/>{icon}'
+        band = round(abs(SHIFT) * HEIGHT, 1)              # transparent space above (shift<0) or below (shift>0) the badge
+        top = band if SHIFT < 0 else 0
+        total = round(HEIGHT + band, 1)
+        svg = (f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{total}" viewBox="0 0 {w} {total}" role="img" aria-label="{text}">'
+               f'<g transform="translate(0,{top})"><rect width="{w}" height="{HEIGHT}" rx="{r}" fill="{fill}"/>{icon}'
                f'<text x="{left + tw/2:.1f}" y="{HEIGHT/2 + fs*BASELINE:.1f}" text-anchor="middle" '
-               f'font-family="{FONT}" font-size="{fs:.1f}" fill="{TEXTCOLOR}" textLength="{tw}" lengthAdjust="spacingAndGlyphs">{html_escape(text)}</text></svg>')
+               f'font-family="{FONT}" font-size="{fs:.1f}" fill="{TEXTCOLOR}" textLength="{tw}" lengthAdjust="spacingAndGlyphs">{html_escape(text)}</text></g></svg>')
         name = re.sub(r"[^A-Za-z0-9]+", "-", text.replace("{}", "-tab")).strip("-") + "-" + fill.lstrip("#") + ("-m" if with_icon else "") + ".svg"
         (WIKI / BADGEDIR).mkdir(parents=True, exist_ok=True)
         (WIKI / BADGEDIR / name).write_text(svg, encoding="utf-8")
@@ -77,7 +81,8 @@ def badge_file(text, fill, with_icon=False):
     return f"{BADGEDIR}/{WRITTEN[key]}"
 
 def img(text, fill, with_icon=False):
-    return f'<img alt="{text}" src="{badge_file(text, fill, with_icon)}" height="{HEIGHT}" align="{ALIGN}">'
+    total = round(HEIGHT * (1 + abs(SHIFT)))
+    return f'<img alt="{text}" src="{badge_file(text, fill, with_icon)}" height="{total}" align="{ALIGN}">'
 
 def html_escape(s):
     return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
