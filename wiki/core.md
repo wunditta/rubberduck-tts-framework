@@ -10,7 +10,7 @@ This is a module of the "Rubberduck TTS Framework" with basic functions, so all 
 | Variable | Description | Type
 |---|---|---|
 | [`boardsRTF={}`](#Places) | A table of base objects for placesRTF, mostly boardsRTF or mats with snap points. Those may have multiple states. | [tab]
-| [`onSaveLoadFuncsRTF={}`](#onSaveLoadFuncsRTF) | A table holding functions to be all run upon game save and load. | [{func}]
+| [`onSaveLoadFuncsRTF={}`](#onSaveLoadFuncsRTF) | A table holding functions to be all run upon game save and load. | [func{}]
 | [`PersistentDataRTF={}`](#PersistentDataRTF) [tab] | A table to store persistent data in (survives save and load). | [tab]
 | [`placesRTF={}`](#Places) | A table of keyed items, where the key is the place and the value specifies a snap point, a container, or a zone. | [tab]
 | [`prefsRTF`](#prefsRTF) | A table holding the user settings for the framework | [tab]
@@ -33,11 +33,11 @@ setPref("getSnapPos.relative", true)
 | [`getPersist`](#getPersist) | Retrieves persistent data from `PersistentData` with [`getTable`](#getTable). | [tab] | -
 | [`getPref(path [str/tab])`](#prefsRTF) | Gets a preference with the specified path (either e.g. "opts.players.white", or {"opt", "players", "white"}).
 | [`getTable`](#getTable) | This function gets a value of a key-value table regardless on which nested level. This is an alternative to a[k1][k2], or a.k1.k2, but avoids an error if any nest key is nil. | [tab] | -
-| [`onSaveLoadFuncsRTF={order={persistent=0}, persistent=func(event [str])}`](#onSaveLoadFuncsRTF) | A table holding functions to be all run upon game save and load. Add your own functions if you need to run code then. | [{func}] | -
+| [`onSaveLoadFuncsRTF={order={persistent=0}, persistent=func(event [str])}`](#onSaveLoadFuncsRTF) | A table holding functions to be all run upon game save and load. Add your own functions if you need to run code then. | [func{}] | -
 | [`regPersistentData(varname [str])`](#addPersistentKey) | Register a variable to be persistent over saving and loading (otherwise the value is lost). | - | -
 | [`setPersist`](#setPersist) | Retrieves persistent data from `Opts` with [`setTable`](#setTable). | [tab] | -
-| [`setPref(path [str/tab], value [var])`](#prefsRTF) | Sets a preference with the specified path (either e.g. "opts.players.white", or {"opt", "players", "white"}). For built-in functions the first level is the function name, the second the key. For your own purpose use a unique first level key. To **delete** a preference specify the value as `nil`.
-| [`setTable(tgt [var{}], src [var/var{}], keys [str{}], insert [bool/num])`](#setTable) | Sets a value into a key-value table regardless on which nested level with different options how the value(s) are joined with existing values for flat lists. | [tab] | -
+| [`setPref(path [str/tab], value [any])`](#prefsRTF) | Sets a preference with the specified path (either e.g. "opts.players.white", or {"opt", "players", "white"}). For built-in functions the first level is the function name, the second the key. For your own purpose use a unique first level key. To **delete** a preference specify the value as `nil`.
+| [`setTable(tgt [any{}], src [any/any{}], keys [str{}], insert [bool/num])`](#setTable) | Sets a value into a key-value table regardless on which nested level with different options how the value(s) are joined with existing values for flat lists. | [tab] | -
 
 ### onSaveLoadFuncsRTF<a name="onSaveLoadFuncsRTF"></a>
 Upon game save and load (TTS functions `onSave` and `onLoad`) all functions in it are run (e.g. `persistent`, which saves persistent data) in the specified order. This way other modules can add code, which needs to run upon save or load. You can add your own code/function too (without overwriting other functionality).
@@ -72,9 +72,9 @@ Sets or joins one or multiple values into a table and returns the final table. T
 
 #### Parameters
 * **`tgt`** [tab]: The table to be changed (is changed as it is given as reference)
-* **`src`** [var]: The value to be set into the table. Use value "nil" (with insert=nil) to remove a nested table. Use "{}" to create an empty nested table. The default behavior is that existing keys are replaced with val, new keys are created and val is assigned. This can be changed with "insert"
-* **`src{}`** [{var}]: MULTI assignment: If you provide multiple values as flat table (no key-val), you can set values to multiple keys at once. The last key in "keys" MUST be a table (see examples "g"). All those keys are getting assigned the corresponding value form the "val" table. AUTOREPEAT: If there are less values than keys, the last value will be assigned to the remaining keys (see examples "f" and "h"), except if insert=4 or 6. Note: val={1}/key={"a","b","c"} will fill {"a","b","c"} with {1,1,1}, but if val={nil,1}, then it will fill with {nil,1,1}
-* **`keys`** [{str}]: Any number of keys (at least 1) as table, where each subsequent key defines a nested table of the key before. NOTE: If you pass keys as variable it is overwritten by the function. To prevent this pass a copy (see table.copy).
+* **`src`** [any]: The value to be set into the table. Use value "nil" (with insert=nil) to remove a nested table. Use "{}" to create an empty nested table. The default behavior is that existing keys are replaced with val, new keys are created and val is assigned. This can be changed with "insert"
+* **`src{}`** [any{}]: MULTI assignment: If you provide multiple values as flat table (no key-val), you can set values to multiple keys at once. The last key in "keys" MUST be a table (see examples "g"). All those keys are getting assigned the corresponding value form the "val" table. AUTOREPEAT: If there are less values than keys, the last value will be assigned to the remaining keys (see examples "f" and "h"), except if insert=4 or 6. Note: val={1}/key={"a","b","c"} will fill {"a","b","c"} with {1,1,1}, but if val={nil,1}, then it will fill with {nil,1,1}
+* **`keys`** [str{}]: Any number of keys (at least 1) as table, where each subsequent key defines a nested table of the key before. NOTE: If you pass keys as variable it is overwritten by the function. To prevent this pass a copy (see table.copy).
 * **`keys`** [str]: Alternatively to a key list you can specify a key path as string, e.g. "opts.players.white".
 * **`keys=nil`**: If keys is nil then var must be a flat array (no key=val pairs, just values). val will be inserted as specified by insert.
 * **`insert`** [bool/num]: How to insert val in var.
@@ -150,7 +150,9 @@ Examples are grouped with the number of the insert mode. Examples with the same 
 ## Function Summary
 | Function | Description | Return | prefsRTF
 |---|---|---|---|
-| `argsRTF(params [tab], specs [tab], noset [bool/tab], name [str])` | A helper function used by most functions to normalize the given parameters as table with honoring `prefsRTF`. | [tab] | -
+| [`argsRTF(params [tab], specs [tab], noset [bool/tab], name [str])`](#argsRTF) | A helper function used by most functions to normalize the given parameters as table with honoring `prefsRTF`. | [tab] | -
+| `onLoad` | This function is <a href="https://api.tabletopsimulator.com/events/#onload">called by TTS automatically</a>. It runs all `onSaveLoadFuncsRTF` with the parameter "load". | - | -
+| `onSave` | This function is <a href="https://api.tabletopsimulator.com/events/#onsave">called by TTS automatically</a>. It runs all `onSaveLoadFuncsRTF` with the parameter "save". The return value of `persistent` is the hardcoded return value for `onSave`. | - | -
 | [`onSaveLoadFuncsRTF.persistent`](#PersistentDataRTF) | Saves and loads the whole table `PersistentDataRTF` JSON encoded. | - | -
 
 ### argsRTF(...)<a name="argsRTF"></a>
@@ -164,7 +166,7 @@ It allows the caller of a function to supply the parameters in differnt ways and
 The value of a paramter is determined by: provided value >>> `prefsRTF.<name>.<param-key>` >>> default value in specs >>> `nil`
 
 #### Parameters
-* **`params`** [var/tab]: The parameter for the function as single parameter of any type, or as keyless list, or as keyed table.
+* **`params`** [any/tab]: The parameter for the function as single parameter of any type, or as keyless list, or as keyed table.
 * **`specs`** [tab]: Holds two things:
   * The keys for the parameters as flat list (in the order they should be provided)
   * The default values as keyed items

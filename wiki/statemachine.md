@@ -4,7 +4,7 @@ The state machine (SM) is a generic flow control framework and is most usefule i
 
 This and many other modules are designed to allow addons to be loaded into the game (e.g. additional card decks or a whole new expansion). Addons can have their own code and can integrate into the core code without the need to change it (e.g. new states for the SM, additional steps in a setup procedure, or even a completely different setup procedure). For more info see [**`addons`**](addons.md).
 
-This is a module of the "Rubberduck TTS Framework" and depends on these other modules: [[core]]
+This is a module of the "Rubberduck TTS Framework" and depends on these other modules: [**`core`**](core.md)
 
 ## Preferences
 Use `setPref` and `getPref` (see [`core`](core.md#prefsRTF)) to set and retrieve the preferences.
@@ -31,9 +31,9 @@ sm.flowpresets = {
 
 | Variable | Description | Type
 |---|---|---|
-| [`FlowSM`](#defaultflow) | A table of strings or tables, specifying the default order of the states | [{string/func}]
-| [`FuncsSM`](#FuncsSM) | A table of state functions, one for each state: `FuncsSM.setup = function(ctx) … end`. | [{func}]
-| [`TextsSM`](#TextsSM) | A table with a subtables with texts to be shown before and after each state | [{tab}]
+| [`FlowSM`](#defaultflow) | A table of strings or tables, specifying the default order of the states | [str/func{}]
+| [`FuncsSM`](#FuncsSM) | A table of state functions, one for each state: `FuncsSM.setup = function(ctx) … end`. | [func{}]
+| [`TextsSM`](#TextsSM) | A table with a subtables with texts to be shown before and after each state | [tab{}]
 
 ### FuncsSM<a name="FuncsSM"></a>
 The table holding all state functions, i.e. when the SM is triggered the function with the name equal to the **current state** is called. The "ids" in the default flow defined in `FlowSM` must also reference to the same names.
@@ -83,7 +83,7 @@ TextsSM = {
 | Function | Description | Return | prefsRTF
 |---|---|---|---|
 | [`addExceptionSM(!!!!!!!!!)`](#addExceptionSM) | Registers an exception (notification, warning, or error) which can display a dialog and may also define how the SM will advance. Also see [Exceptions](#Exceptions). | - | -
-| [`getExceptionSM()`](#getExceptionSM) | Returns 1) the history (exceptions) as table of sub-tables (one for each exception: `{type=, description=, severity=, special=}`), and 2) the highest severity rating of all exceptions. | [{tab}], [num] | -
+| [`getExceptionSM()`](#getExceptionSM) | Returns 1) the history (exceptions) as table of sub-tables (one for each exception: `{type=, description=, severity=, special=}`), and 2) the highest severity rating of all exceptions. | [tab{}], [num] | -
 | [`getFlagSM()`](#flags) | 
 | `getFlowIndexSM(state=current state [str])` | Returns the index number of the specified (or current) state within `FlowSM`.<br>* `false`: If not found<br>* `0`: SM never run<br>* `-1`: SM finished | [num] | -
 | `getFlowNameSM(stateindex=current state [num])` | Returns the id (name) of the specified (or current) state within `FlowSM`.<br>* `false`: If index is out of bounds<br>* `""`: if SM never run or is finished | [str] | -
@@ -121,8 +121,8 @@ This should work like todays addUIStateException. Description can mostly taken f
 
 ### State Parameters<a name="stateinfo"></a>
 The following parameters are central for the SM and hold the state info and info how the SM should advance.
-* **`prev`** [string]: The id (name) of the previously run state (may not follow the order in `FlowSM`).
-* **`state`** [string]: The id (name) of the current state.
+* **`prev`** [str]: The id (name) of the previously run state (may not follow the order in `FlowSM`).
+* **`state`** [str]: The id (name) of the current state.
 * **`next`** [str/num/bool]: Specifies the next state to run:
   * "id" [str]: The id/name of the state, i.e. the name of a `FuncsSM` function.
   * `false` [bool]: Will return to the previously run state (which not neceassarily is the one before in `FlowSM`).
