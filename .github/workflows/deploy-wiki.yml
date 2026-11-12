@@ -1,6 +1,7 @@
 # .github/workflows/deploy-wiki.yml
 name: deploy-wiki
 on:
+  workflow_dispatch:
   push:
     branches: "main"
     paths: wiki/**
