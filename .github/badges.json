@@ -12,6 +12,9 @@
         "vec": "#d2f0d9"
     },
     "modulecolor": "#ececec",
+    "modules": {
+        "core": "#ececec"
+    },
     "badge": {
         "height": 18,
         "fontSize": 0.9,
@@ -39,8 +42,9 @@
         "shift": 0,
         "charWidth": 0.62,
         "textMargin": 0.08,
-        "codeHeight": 16,
-        "altGap": "&thinsp;"
+        "codeHeight": 14,
+        "altGap": "&thinsp;",
+        "tableMinWidth": true
     },
     "badgesInCodeSpans": true,
     "externalLinksToHtml": true
