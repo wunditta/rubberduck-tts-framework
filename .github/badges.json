@@ -27,8 +27,8 @@
         "workflow": "#78B313"
     },
     "badge": {
-        "height": 16,
-        "codeHeight": 16,
+        "height": 14,
+        "codeHeight": 14,
         "//codeHeight": "The height of the badges within code (set to same as height to make all badges equal size)",
         "fontSize": 0.8,
         "radius": 0.25,
