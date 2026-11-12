@@ -151,8 +151,6 @@ Examples are grouped with the number of the insert mode. Examples with the same 
 | Function | Description | Return | prefsRTF
 |---|---|---|---|
 | `argsRTF(params [tab], specs [tab], noset [bool/tab], name [str])` | A helper function used by most functions to normalize the given parameters as table with honoring `prefsRTF`. | [tab] | -
-| `onLoad` | This function is [called by TTS automatically](https://api.tabletopsimulator.com/events/#onload). It runs all `onSaveLoadFuncsRTF` with the parameter "load". | - | -
-| `onSave` | This function is [called by TTS automatically](https://api.tabletopsimulator.com/events/#onsave). It runs all `onSaveLoadFuncsRTF` with the parameter "save". The return value of `persistent` is the hardcoded return value for `onSave`. | - | -
 | [`onSaveLoadFuncsRTF.persistent`](#PersistentDataRTF) | Saves and loads the whole table `PersistentDataRTF` JSON encoded. | - | -
 
 ### argsRTF(...)<a name="argsRTF"></a>
