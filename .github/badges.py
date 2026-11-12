@@ -33,6 +33,7 @@ CHARWIDTH = float(B.get("charWidth", 0.62))      # fallback glyph width (multipl
 CODEHEIGHT = int(B.get("codeHeight", 16))        # px; badges inside code spans (GitHub renders code at 85% of the body size)
 MARGIN = float(B.get("textMargin", 0.08))        # safety margin on the measured text width (multiple of the font size) - room for fallback fonts
 ALTGAP = B.get("altGap", "&thinsp;")             # between the badges of alternatives ([str/num])
+ALTGAPCODE = B.get("altGapCode", "")            # the same inside code spans (monospace renders &thinsp; as a full space)
 TABLEMIN = B.get("tableMinWidth", True)          # a column of badge-only cells gets its header widened with &nbsp; to the widest badge, so the column cannot shrink the images
 LASTWIDTH = {}                                   # file name -> badge width in px (for TABLEMIN)
 # Verdana advance widths in 1/2048 em (from the font's metrics); the text is centred, so a small error only moves the padding
@@ -148,7 +149,7 @@ def type_badges(inner, height=None):
             return None
         text = base + suf
         out.append(img(text, TYPES[base], False, height))
-    return ALTGAP.join(out)
+    return (ALTGAPCODE if height == CODEHEIGHT else ALTGAP).join(out)
 
 def module_badge(name):
     return f'<a href="./{name}">{img(name, MODCOLORS.get(name, MODCOLOR), True)}</a>'
