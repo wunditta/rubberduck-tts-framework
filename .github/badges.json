@@ -1,19 +1,30 @@
 {
     "types": {
-        "str": "#ececec",
-        "num": "#ececec",
-        "bool": "#ececec",
-        "nil": "#ececec",
-        "any": "#ececec",
-        "tab": "#cfe2ff",
-        "func": "#e6d8ff",
-        "obj": "#d2f0d9",
-        "guid": "#d2f0d9",
-        "vec": "#d2f0d9"
+        "str": "#acc39b",
+        "num": "#d48e87",
+        "int": "#d48e87",
+        "float": "#d48e87",
+        "bool": "#be9fad",
+        "nil": "#676666",
+        "any": "#e0e270",
+        "var": "#e0e270",
+        "tab": "#c1c1c1",
+        "func": "#de4816",
+        "obj": "#b1bfe0",
+        "guid": "#b1bfe0",
+        "vec": "#f4d29a",
+        "col": "#e2bae0",
+        "player": "#b5e1e5"
     },
     "modulecolor": "#ececec",
     "modules": {
-        "core": "#ececec"
+        "addons": "#B7A114",
+        "core": "#666666",
+        "dev": "#000000",
+        "dialog": "#",
+        "object": "#1445B7",
+        "statemachine": "#1489B7",
+        "workflow": "#78B313"
     },
     "badge": {
         "height": 18,
