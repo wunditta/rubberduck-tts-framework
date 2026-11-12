@@ -33,7 +33,7 @@
         "padding": 0.16,
         "font": "Verdana, DejaVu Sans, sans-serif",
         "textColor": "#000000",
-        "moduleTextColor": "#000000",
+        "moduleTextColor": "#FFFFFF",
         "baseline": 0.37,
         "dir": "badges",
         "align": "texttop",
