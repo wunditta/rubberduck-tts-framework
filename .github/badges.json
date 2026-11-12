@@ -1,0 +1,12 @@
+{
+    "style": "flat-square",
+    "types": {
+        "str":  "9e9e9e", "num": "9e9e9e", "bool": "9e9e9e", "nil": "9e9e9e", "any": "9e9e9e",
+        "tab":  "1f6feb", "func": "8250df",
+        "obj":  "2da44e", "guid": "2da44e", "vec": "2da44e"
+    },
+    "modulecolor": "d4a017",
+    "externalLinksToHtml": true,
+    "badgesInCodeSpans": true,
+    "typeLabel": ""
+}
