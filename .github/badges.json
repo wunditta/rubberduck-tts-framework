@@ -1,12 +1,44 @@
 {
-    "style": "flat-square",
     "types": {
-        "str":  "9e9e9e", "num": "9e9e9e", "bool": "9e9e9e", "nil": "9e9e9e", "any": "9e9e9e",
-        "tab":  "1f6feb", "func": "8250df",
-        "obj":  "2da44e", "guid": "2da44e", "vec": "2da44e"
+        "str": "#ececec",
+        "num": "#ececec",
+        "bool": "#ececec",
+        "nil": "#ececec",
+        "any": "#ececec",
+        "tab": "#cfe2ff",
+        "func": "#e6d8ff",
+        "obj": "#d2f0d9",
+        "guid": "#d2f0d9",
+        "vec": "#d2f0d9"
     },
-    "modulecolor": "d4a017",
-    "externalLinksToHtml": true,
+    "modulecolor": "#ececec",
+    "badge": {
+        "height": 18,
+        "fontSize": 0.9,
+        "radius": 0.25,
+        "padding": 0.16,
+        "font": "Verdana, DejaVu Sans, sans-serif",
+        "textColor": "#000000",
+        "charWidth": 0.62,
+        "baseline": 0.37,
+        "dir": "badges",
+        "align": "texttop",
+        "icon": {
+            "path": "M1654.458,1552.466C1646.842,1549.924 1638.698,1548.548 1630.235,1548.548C1587.981,1548.548 1553.677,1582.852 1553.677,1625.105C1553.677,1667.359 1587.981,1701.663 1630.235,1701.663C1638.698,1701.663 1646.842,1700.286 1654.458,1697.745L1654.458,1800.08L1353.024,1800.08L1353.024,1697.745C1345.409,1700.286 1337.264,1701.663 1328.801,1701.663C1286.548,1701.663 1252.244,1667.359 1252.244,1625.105C1252.244,1582.852 1286.548,1548.548 1328.801,1548.548C1337.264,1548.548 1345.409,1549.924 1353.024,1552.466L1353.024,1450.131L1654.458,1450.131L1654.458,1552.466Z",
+            "box": [
+                1252.244,
+                1450.131,
+                402.214,
+                349.949
+            ],
+            "rotate": 90,
+            "height": 0.84,
+            "padding": 0.2,
+            "gap": 0.12,
+            "color": "#d9690b"
+        },
+        "shift": 0
+    },
     "badgesInCodeSpans": true,
-    "typeLabel": ""
+    "externalLinksToHtml": true
 }
