@@ -4,7 +4,9 @@ on:
   workflow_dispatch:
   push:
     branches: "main"
-    paths: wiki/**
+    paths: wiki/**          # trigger filters cannot use env - keep in step with WIKI_PATH
+env:
+  WIKI_PATH: wiki
 jobs:
   deploy-wiki:
     permissions:
@@ -12,5 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Expand badges and shorthands # written by Claude & wunditta
+        run: python3 .github/scripts/badges.py "$WIKI_PATH"
       - uses: actions4gh/configure-wiki@v1
+        with:
+          path: ${{ env.WIKI_PATH }}
       - uses: actions4gh/deploy-wiki@v1
