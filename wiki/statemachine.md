@@ -31,7 +31,7 @@ sm.flowpresets = {
 
 | Variable | Description | Type
 |---|---|---|
-| [`FlowSM`](#defaultflow) | A table of strings or tables, specifying the default order of the states | [(str{}/func){}]
+| [`FlowSM`](#defaultflow) | A table of strings or tables, specifying the default order of the states | [str{}/func{}]
 | [`FuncsSM`](#FuncsSM) | A table of state functions, one for each state: `FuncsSM.setup = function(ctx) … end`. | [func{}]
 | [`TextsSM`](#TextsSM) | A table with a subtables with texts to be shown before and after each state | [tab{}]
 
