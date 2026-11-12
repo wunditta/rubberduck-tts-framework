@@ -27,8 +27,8 @@
         "workflow": "#78B313"
     },
     "badge": {
-        "height": 18,
-        "fontSize": 0.8,
+        "height": 16,
+        "fontSize": 0.9,
         "radius": 0.25,
         "padding": 0.16,
         "font": "Verdana, DejaVu Sans, sans-serif",
@@ -52,11 +52,11 @@
             "height": 0.84,
             "padding": 0.2,
             "gap": 0.12,
-            "color": "#d9690b"
+            "color": "#E5CC4C"
         },
         "charWidth": 0.62,
         "textMargin": 0.08,
-        "codeHeight": 14,
+        "codeHeight": 12,
         "altGap": "&thinsp;",
         "altGapCode": "",
         "tableMinWidth": true
