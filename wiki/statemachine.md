@@ -4,7 +4,7 @@ The state machine (SM) is a generic flow control framework and is most usefule i
 
 This and many other modules are designed to allow addons to be loaded into the game (e.g. additional card decks or a whole new expansion). Addons can have their own code and can integrate into the core code without the need to change it (e.g. new states for the SM, additional steps in a setup procedure, or even a completely different setup procedure). For more info see [**`addons`**](addons.md).
 
-This is a module of the "Rubberduck TTS Framework" and depends on these other modules: [**`core`**](core.md)
+This is a module of the "Rubberduck TTS Framework" and depends on these other modules: [[core.md]]
 
 ## Preferences
 Use `setPref` and `getPref` (see [`core`](core.md#prefsRTF)) to set and retrieve the preferences.
