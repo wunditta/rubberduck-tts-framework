@@ -211,7 +211,7 @@ def pad_table(lines):
         if widest <= have:
             continue
         n = int((widest - have) / (16 * 0.28)) + 2
-        half = "&nbsp;" * (((n + 1) // 2) +1)
+        half = "&nbsp;" * (((n + 1) // 2) + 2)
         head[i] = " " + half + text + half + " "
     lines[0] = "|".join(head)
     return lines
