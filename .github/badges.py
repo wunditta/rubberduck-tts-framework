@@ -54,6 +54,7 @@ BASELINE = float(B.get("baseline", 0.37))        # baseline below the badge cent
 BADGEDIR = B.get("dir", "badges")                # folder inside the wiki folder that receives the SVG files
 ALIGN = B.get("align", "texttop")                # <img align=...>: GitHub strips style attributes but keeps align (baseline, middle, absmiddle, absbottom, texttop, top, bottom)
 SHIFT = float(B.get("shift", 0))                 # transparent band added to the image, as a multiple of the height: >0 below (the badge moves up), <0 above (moves down)
+CODESHIFT = float(B.get("codeShift", SHIFT))     # type badges inside code spans: their own shift (default: shift)
 MODSCALE = float(B.get("moduleScale", 1))        # module badges: height = height * moduleScale
 MODSHIFT = float(B.get("moduleShift", SHIFT))    # module badges: their own shift (default: shift)
 ICON = B.get("icon")                             # module badges: {"path": svg path data, "box": [x, y, w, h] of the path, "rotate": 90, "height": 0.84, "padding": 0.2, "gap": 0.12, "color": "#d9690b"}
@@ -82,7 +83,7 @@ def badge_file(text, fill, with_icon=False, height=None, shift=None):
     """write (once) the SVG for this text/colour/height into <wiki>/<dir>/ and return its URL for <img src>"""
     H = height or HEIGHT
     S = SHIFT if shift is None else shift
-    key = (text, fill, with_icon, H)
+    key = (text, fill, with_icon, H, S)
     if key not in WRITTEN:
         fs = H * FONTSIZE
         tw = round(text_width(text, fs), 1)
@@ -100,7 +101,7 @@ def badge_file(text, fill, with_icon=False, height=None, shift=None):
                f'<g transform="translate(0,{top})"><rect width="{w}" height="{H}" rx="{r}" fill="{fill}"/>{icon}'
                f'<text x="{left + tw/2:.1f}" y="{H/2 + fs*BASELINE:.1f}" text-anchor="middle" '
                f'font-family="{FONT}" font-size="{fs:.1f}" fill="{MODTEXTCOLOR if with_icon else TEXTCOLOR}">{html_escape(text)}</text></g></svg>')
-        name = re.sub(r"[^A-Za-z0-9]+", "-", text.replace("{}", "-tab")).strip("-") + "-" + fill.lstrip("#") + ("-m" if with_icon else "") + (f"-{H}" if H != HEIGHT else "") + ".svg"
+        name = re.sub(r"[^A-Za-z0-9]+", "-", text.replace("{}", "-tab")).strip("-") + "-" + fill.lstrip("#") + ("-m" if with_icon else "") + (f"-{H}" if H != HEIGHT else "") + (f"-s{S}".replace(".", "_") if S != SHIFT else "") + ".svg"
         (WIKI / BADGEDIR).mkdir(parents=True, exist_ok=True)
         (WIKI / BADGEDIR / name).write_text(svg, encoding="utf-8")
         WRITTEN[key] = name
@@ -123,7 +124,7 @@ def convert_code_span(span):
         return span
     pieces, pos, found = [], 0, False
     for m in TYPE_TOKEN.finditer(inner):
-        html = type_badges(m.group(1), CODEHEIGHT)
+        html = type_badges(m.group(1), CODEHEIGHT, True)
         if html is None:
             continue
         found = True
@@ -135,7 +136,7 @@ def convert_code_span(span):
     pieces.append(html_escape(inner[pos:]))
     return "<code>" + "".join(pieces) + "</code>"
 
-def type_badges(inner, height=None):
+def type_badges(inner, height=None, incode=False):
     """[str/num{}] -> HTML of one badge per alternative, or None if any base is unknown.
     [(str/tab){}] -> one badge "str/tab{}" (a table whose items are strings or tables), coloured like a table."""
     g = GROUP_TOKEN.fullmatch(inner)
@@ -143,7 +144,7 @@ def type_badges(inner, height=None):
         bases = g.group(1).split("/")
         if any(b not in TYPES for b in bases) or "tab" not in TYPES:
             return None
-        return img(g.group(1) + g.group(2), TYPES["tab"], False, height)
+        return img(g.group(1) + g.group(2), TYPES["tab"], False, height, CODESHIFT if incode else None)
     out = []
     for part in inner.split("/"):
         base, suf = part, ""
@@ -152,8 +153,8 @@ def type_badges(inner, height=None):
         if base not in TYPES:
             return None
         text = base + suf
-        out.append(img(text, TYPES[base], False, height))
-    return (ALTGAPCODE if height == CODEHEIGHT else ALTGAP).join(out)
+        out.append(img(text, TYPES[base], False, height, CODESHIFT if incode else None))
+    return (ALTGAPCODE if incode else ALTGAP).join(out)
 
 def module_badge(name):
     return f'<a href="./{name}">{img(name, MODCOLORS.get(name, MODCOLOR), True, round(HEIGHT * MODSCALE, 1), MODSHIFT)}</a>'
