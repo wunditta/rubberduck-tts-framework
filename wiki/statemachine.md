@@ -4,9 +4,10 @@ The state machine (SM) is a generic flow control framework and is most usefule i
 
 This and many other modules are designed to allow addons to be loaded into the game (e.g. additional card decks or a whole new expansion). Addons can have their own code and can integrate into the core code without the need to change it (e.g. new states for the SM, additional steps in a setup procedure, or even a completely different setup procedure). For more info see [**`addons`**](addons.md).
 
-This is a module of the "Rubberduck TTS Framework" and depends on these other modules: [**`core`**](core.md)
+This is a module of the "Rubberduck TTS Framework" and depends on these other modules: [**`core`**](core.md) [**`dialog`**](dialog.md)
 
 ## Preferences
+
 Use `setPref` and `getPref` (see [`core`](core.md#prefsRTF)) to set and retrieve the preferences.
 
 | Path | Description
@@ -14,6 +15,7 @@ Use `setPref` and `getPref` (see [`core`](core.md#prefsRTF)) to set and retrieve
 | [`sm.flowpresets`](#sm.flowpresets) | A table with nested keyed tables, which define a preset for `addExceptionSM` and the return value of a `FuncsSM` function.
 
 ### sm.flowpresets<a name="sm.flowpresets"></a>
+
 Certain combinations of the parameters for advancing through the SM are used frequently. Here you can define preset combinations and refer to them by their name (key).
 
 For each nested table the key is an id/name and the value is a combination of the [**state parameters**](#stateinfo) and the parameters for function [`addExceptionSM`](#addExceptionSM) (you must use named parameters). If used as return value for a `FuncsSM` function the exception parameters are ignored. By default the following presets are defined:
@@ -35,18 +37,21 @@ sm.flowpresets = {
 | [`TextsSM`](#TextsSM) | A table with a subtables with texts to be shown before and after each state | [tab{}]
 
 ### FuncsSM<a name="FuncsSM"></a>
+
 The table holding all state functions, i.e. when the SM is triggered the function with the name equal to the **current state** is called. The "ids" in the default flow defined in `FlowSM` must also reference to the same names.
 * Function definition: `FuncsSM.<name> = function(stateinfo [tab]) ... return "preset" end`
 * States are run inside a coroutine, thus they run in parallel to the rest of the code.
 * A state must not call `runSM` itself, if the next state should be started immediately use `setFlowSM{restart=true}`.
 
-#### Parameters
+**Parameters**
+
 Parameter given to each function: For convenience a table `{prev=, state=, speed=}` is provided (info taken from `getStateSM` (second return) and the speed parameter from `runSM`.
 
-#### Return
+**Return**
 For convenience the flow can be defined with a [`flowpreset`](#sm.flowpresets) as return value (instead of using `setFlowSM`). Also see [`Flow Control`](#flowcontrol).
 
-#### Example
+**Example**
+
 ```lua
 FlowSM = {"init", "setup"}
 FuncsSM = {
@@ -61,8 +66,7 @@ FuncsSM = {
 ```
 
 ### TextsSM<a name="TextsSM"></a>
-
-
+!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ```lua
 TextsSM = {
@@ -79,6 +83,7 @@ TextsSM = {
 ```
 
 ## Function Summary
+
 | Function | Description | Return | prefsRTF
 |---|---|---|---|
 | [`addExceptionSM(!!!!!!!!!)`](#addExceptionSM) | Registers an exception (notification, warning, or error) which can display a dialog and may also define how the SM will advance. Also see [Exceptions](#Exceptions). | - | -
@@ -102,10 +107,12 @@ TextsSM = {
 ### addExceptionSM(...)<a name="addExceptionSM"></a>
 This should work like todays addUIStateException. Description can mostly taken from this.
 
-#### Parameters
+**Parameters**
+
 * **``**:
 
-#### Return
+**Return**
+
 * **``**:
 
 ## Flow Control<a name="flowcontrol"></a>
@@ -184,19 +191,23 @@ The default flow is specified in "FlowSM", which is a list of the states in orde
   * `text="key"`: The `TextsSM` key if it differs from the state name.
 
 ### Exceptions(...)<a name="Exceptions"></a>
+
 General explanation of the concept....
 Similar to current, but flow parameters are set according to severity (equal or higher overrules lower)
 
 * Exceptions: `addExceptionSM(kind, level, text)` — collected while a state runs, evaluated when it returns: `kind="hold"` → the machine waits for a trigger, whatever the speed (the players fix something); an exception that requires a state to run again sets `next` to that state's id; `level="error"|"note"` decides the colour and whether the texts are shown in a dialog or only in the chat *(decide)*. The texts are shown through a callback the dialog module registers (`registerShowSM(fn)`); the machine itself prints nothing. Today's `addUIStateException`, `getUIStateExceptions`, `removeUIStateExit`.
 
 ### Flags<a name="flags"></a>
+
 Shoul not be here, but as normal function description in the table
 * Flags: `flagSM(name, value)` / `flagSM(name)` — booleans that survive a load (in the record), cleared by `resetSM` (today's `setUIFlag`/`getUIFlag`, e.g. `cardmats`, `startdeck`, `qm_role`).
 
 ### Example
+
 Let's assume the players selected a special option in state A, which requires them to do something manually on the board. Before you continue with the normal setup (state B) you want to check if this was done. There are two options:
 
 #### Additional State Function
+
 Add an additional state function C, which performs the check and continues with B. It is not included in `FlowSM`, but A sets C as next state if the option was chosen, otherwise C is left out.
 
 ```lua
@@ -220,6 +231,7 @@ FuncsSM = {
 ```
 
 #### Flag and Rerun the same State
+
 In case you could reuse some code from state A for the check you would not want to copy it to C. Instead set a flag and do not advance the state, so that A is rerun, and because of the flag A knows that now it should perform the check.
 
 ```lua
@@ -243,6 +255,7 @@ FuncsSM = {
 # Internal
 
 ## Member Variables
+
 | Variable | Description | Type
 |---|---|---|
 | `lockedSM` | Is true if the SM is running, otherwise false (is used for `isRunningSM`). | [bool]
@@ -252,6 +265,7 @@ FuncsSM = {
 ### persistSM.state<a name="persistSM.state"></a>
 
 ## Function Summary
+
 | Function | Description | Return | prefsRTF
 |---|---|---|---|
 | `advanceStateSM(speed [num])` | The code actually determining the next state (and may also call runSM() if restart~=false). It needs to be a separate function as it is called by runSM() after a state is finished and by a dialog when pressing OK. | - | -
@@ -260,6 +274,7 @@ FuncsSM = {
 ## Functions
 
 ### advanceStateSM(...)
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!
 Advances to the next state. This should only be called by runSM after a state has finished.
 * **`advance=true`** [bool]: If true the current (pending) state is set to `next` or to the next state as defined in `FlowSM`. If this does not resolve to a valid state (i.e. a corresponding function in `FuncsSM` is present, or it exists in `FlowSM`) the state is set to empty and the SM will not run.
@@ -269,6 +284,7 @@ Advances to the next state. This should only be called by runSM after a state ha
 # Overhaul
 
 ## Changes from current code
+
 * UIStateAdvance -> advanceStateSM
 * setUIStateFlow -> setFlowSM
 * UIRunStateMachine -> runSM
@@ -280,9 +296,11 @@ Advances to the next state. This should only be called by runSM after a state ha
 * isOrAfterUIState -> isOrAfterFlowSM
 
 ## Additional Info
+
 * `persistSM`: is created in this module and registered with `regPersistentData("persistSM")` (core).
 * A state is not told what triggered it (`runSM` has no such parameter). If a state needs to know, set a flag (`setFlagSM`) before calling `runSM`.
 * The overrule mechanism for forcing to run the SM will not be implemented. It was never necessary and it contradicts the concept of a state machine.
 
 ## Test harness
+
 `statemachine_test.lua`: a flow of dummy states recording their calls; cases: default order, jump by return value, `"wait"`/`"end"`, speed rule (0/1/true), `onload` with a saved record, exceptions (hold, next=id), flags across `resetSM`, a custom `FlowSM`/`FuncsSM` joined (after/before/replace/merge, string ids), lockout while running, unlock after 3 s. Run via Execute, PASS/FAIL per case.

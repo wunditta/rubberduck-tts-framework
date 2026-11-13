@@ -7,6 +7,7 @@ This and many other modules are designed to allow addons to be loaded into the g
 This is a module of the "Rubberduck TTS Framework" with basic functions, so all other modules of the framework depend on.
 
 ## Member Variables
+
 | Variable | Description | Type
 |---|---|---|
 | [`boardsRTF={}`](#Places) | A table of base objects for placesRTF, mostly boardsRTF or mats with snap points. Those may have multiple states. | [tab]
@@ -16,6 +17,7 @@ This is a module of the "Rubberduck TTS Framework" with basic functions, so all 
 | [`prefsRTF`](#prefsRTF) | A table holding the user settings for the framework | [tab]
 
 ### prefsRTF<a name="prefsRTF"></a>
+
 This allows to set user default values and other settings for the whole framework. In the function summary tables you can see if a function supports the settings or not (Y=Yes, -=No, {params}=Only the stated params are supported). You can use this for your own purposes, just make sure to use a unique key as second level (where the function name is).
 
 For framework functions the path is always like this: `prefsRTF.<function name>.<parameter name> = ...`
@@ -28,6 +30,7 @@ setPref("getSnapPos.relative", true)
 ```
 
 ## Function Summary
+
 | Function | Description | Return | prefsRTF
 |---|---|---|---|
 | [`getPersist`](#getPersist) | Retrieves persistent data from `PersistentData` with [`getTable`](#getTable). | [tab] | -
@@ -40,9 +43,11 @@ setPref("getSnapPos.relative", true)
 | [`setTable(tgt [any{}], src [any/any{}], keys [str{}], insert [bool/num])`](#setTable) | Sets a value into a key-value table regardless on which nested level with different options how the value(s) are joined with existing values for flat lists. | [tab] | -
 
 ### onSaveLoadFuncsRTF<a name="onSaveLoadFuncsRTF"></a>
+
 Upon game save and load (TTS functions `onSave` and `onLoad`) all functions in it are run (e.g. `persistent`, which saves persistent data) in the specified order. This way other modules can add code, which needs to run upon save or load. You can add your own code/function too (without overwriting other functionality).
 
-#### Details
+**Details**
+
 * **`.<function name> = function(event) ... end`**: 
 * **`.order.<function name> = order`**: Specifies the order to run the functions. The key is the function name and the value the order.
   * Forbidden: Value **0** and values from **101 to 200** are reserved for the framework. Do **NOT** use one of those!
@@ -50,10 +55,12 @@ Upon game save and load (TTS functions `onSave` and `onLoad`) all functions in i
   * On Save: The functions are executed in **reverse** order from high to low; [`persistent`](#addPersistentKey) is always last (ensuring that persistent data changed by other onSaveLoad functions is also saved).
   * You do not have to specify an order for your functions, they are still run (at the end on load, at the beginning on save).
 
-#### Parameter for each Function
+**Parameter for each Function**
+
 * **`event`**: Each function must accept one string parameter, which is either "load" or "save" to run the specific code each event.
 
-#### Example
+**Example**
+
 ```lua
 onSaveLoadFuncsRTF.myFunction = function(event)
   if event="load" then
@@ -70,7 +77,8 @@ Sets or joins one or multiple values into a table and returns the final table. T
 * MULTI Assignment: You can assign multiple values to multiple keys (within the same table) at once.
 * AUTOREPEAT: For MULTI assignment you do not have to specify a value for each key, as the last provided value will be repeated until all keys do have a value.
 
-#### Parameters
+**Parameters**
+
 * **`tgt`** [tab]: The table to be changed (is changed as it is given as reference)
 * **`src`** [any]: The value to be set into the table. Use value "nil" (with insert=nil) to remove a nested table. Use "{}" to create an empty nested table. The default behavior is that existing keys are replaced with val, new keys are created and val is assigned. This can be changed with "insert"
 * **`src{}`** [any{}]: MULTI assignment: If you provide multiple values as flat table (no key-val), you can set values to multiple keys at once. The last key in "keys" MUST be a table (see examples "g"). All those keys are getting assigned the corresponding value form the "val" table. AUTOREPEAT: If there are less values than keys, the last value will be assigned to the remaining keys (see examples "f" and "h"), except if insert=4 or 6. Note: val={1}/key={"a","b","c"} will fill {"a","b","c"} with {1,1,1}, but if val={nil,1}, then it will fill with {nil,1,1}
@@ -90,7 +98,8 @@ Sets or joins one or multiple values into a table and returns the final table. T
     * 6:  Add/Replace, but not if nil (w/o AUTOREPEAT): Like nil (overwrites existing values), but without AUTOREPEAT, i.e. does not update existing items if val is nil (therefore you can update multiple values (MULTI assign), but still avoid to overwrite existing values if new one are not set (=nil)).
     * 7:  Add only (do not overwrite): Like insert=nil, but does not update existing items (AUTOREPEAT is supported, i.e. setTable({a=false}, {true, nil}, {{"a", "b"}}, 7) results in {a=false, b=true})
 
-#### Examples
+**Examples**
+
 Examples are grouped with the number of the insert mode. Examples with the same letter use the same input data, but different modes.
 ```
 * Ex 0: Insert=0/nil: Add/Replace
@@ -143,11 +152,13 @@ Examples are grouped with the number of the insert mode. Examples with the same 
 # Internal
 
 ## Member Variables
+
 | Variable | Description | Type
 |---|---|---|
 | [`PersistentDataVarsRTF={"PersistentDataRTF"}`](#PersistentDataRTF) | A table with the names of all variables which should be persistent data. Therefore all variables to be stored persistently must have different names. | table
 
 ## Function Summary
+
 | Function | Description | Return | prefsRTF
 |---|---|---|---|
 | [`argsRTF(params [tab], specs [tab], noset [bool/tab], name [str])`](#argsRTF) | A helper function used by most functions to normalize the given parameters as table with honoring `prefsRTF`. | [tab] | -
@@ -156,6 +167,7 @@ Examples are grouped with the number of the insert mode. Examples with the same 
 | [`onSaveLoadFuncsRTF.persistent`](#PersistentDataRTF) | Saves and loads the whole table `PersistentDataRTF` JSON encoded. | - | -
 
 ### argsRTF(...)<a name="argsRTF"></a>
+
 The parameters are normalized to become a keyed table with defaults and `prefsRTF` applied. Used by most frameworkd functions.
 
 It allows the caller of a function to supply the parameters in differnt ways and all are converted into a table. When calling argsRTF the function provides keys to get a keyed table (note: it is also possible to not provide keyes to get a flat list, but then no default values can be assigned by argsRTF; not recommended):
@@ -165,7 +177,8 @@ It allows the caller of a function to supply the parameters in differnt ways and
 
 The value of a paramter is determined by: provided value >>> `prefsRTF.<name>.<param-key>` >>> default value in specs >>> `nil`
 
-#### Parameters
+**Parameters**
+
 * **`params`** [any/tab]: The parameter for the function as single parameter of any type, or as keyless list, or as keyed table.
 * **`specs`** [tab]: Holds two things:
   * The keys for the parameters as flat list (in the order they should be provided)
@@ -173,7 +186,8 @@ The value of a paramter is determined by: provided value >>> `prefsRTF.<name>.<p
 * **`settings=true`** [bool/tab]: If `false` values in `prefsRTF` are ignored, thus preventing this functionality. Instead of true/false a table can be provided with the keys of the parameters, which are supported (settings for unlisted keys are ignored).
 * **`name`** [str]: The function name to get the values from `prefsRTF`, thus only needs to be set if noset is not `true`. (Note: Unfortunately there is no way to get the name of the current function, so it is necessary to provide it.)
 
-#### Example
+**Example**
+
 ```lua
 setPref{"getSnapPos.offset", {x=2}}
 getSnapPos{1, "763234"}
@@ -187,18 +201,23 @@ function getSnapPos(p)
 ### PersistentDataRTF<a name="PersistentDataRTF"></a>
 
 #### onSaveLoadFuncsRTF.persistent
+
 TTS does not save variables by default. The function `onSaveLoadFuncsRTF.persistent` combines all variables in `PersistentDataVarsRTF` to one table (value is also key, e.g. ["PersistentDataRTF"]=PersistentDataRTF), JSON encodes it and returns it. `onSave` uses this return values as its hardcoded return value. `onLoad` does the reverse and restores all variables.
 
 #### PersistentDataRTF
+
 The table `PersistentDataRTF` is provided by default to store persistent data. It does not have data by default. For different purposes it is recommended to use separate sub-keys (e.g. `PersistentDataRTF.MyPlayers` for player related data). 
 
 #### regPersistentData(...)<a name="addPersistentKey"></a>
+
 `PersistentDataRTF` is provided by default. For different purposes (or already existing code) you may want to make other variables also persistent. Use this function to register additional variables, which should be saved and loaded automatically. Some modules (e.g. **dialog**, **statemachine**) also use this with their own permanent variables, so you might want to check not to use one of those.
 
-##### Parameters
+**Parameters**
+
 * **`varname [str]`**: The name of the variable to be stored persistently.
 
-##### Example
+**Example**
+
 ```lua
 MyOwnPermanent = {}
 regPersistentData("MyOwnPermanent")
@@ -207,19 +226,15 @@ regPersistentData("MyOwnPermanent")
 # Overhaul
 
 * getPref/setPref are another wrapper (like the old setData/getData, which will still exist for module dialog, but renamed) and calls get/setTable with "prefsRTF" as first key and insert=4.
-* Can metatable functions be used for setTable and other table helper functions we have?
-
-## Exceptions
-
-Should go into core maybe (would also fit with popups then).
 
 ## Popup dialogs
 
-Popups can be usefule even without big dialogs for which the module dialog is meant for, however it may share a lot of code. So the question is to include this here or in module dialog.
+Popups are part of core (usable without the module dialog, which builds on them).
 
-The idea is basically that of today's UIInfoBox with an added feature. A timed popup can be placed in the center as today. But a rolling variant for multiple popups should be added. The code in "Reference Code" was taken from another TTS mod which implements this functionality. The dialogs are placed in the lower right corner of the screen. Additional popups stack on top of it. After the time (set for each popup) they disappear and the popups above "fall down" to fill the gap. Right now the popups fade in, i.e. slowly move in from the side. But when disappearing they disappear immediatey. If possible they should also fade out, i.e. slowly move to the right out of the screen. The screen side right or left should be configurable.
+The idea is basically that of today's UIInfoBox with an added feature. A timed popup can be placed in the center as today. But a rolling variant for multiple popups should be added. The popups are placed in a lower corner of the screen (side configurable: right or left; this also sets the direction of the slide animations). Additional popups stack on top. Each popup keeps its own panel until its time (set per popup) is over; then this panel slides out to the side and the popups above move down to fill the gap (the move is a jump; TTS does not animate position changes). The panels are created from Lua (`UI.setXmlTable`, once in `onLoad`) and all popups are cleared on load, as the panel state is saved with the game but the timers are not. The code in "Reference Code" was taken from another TTS mod which implements a similar functionality (there, the content is shifted between panels and always the top panel is hidden, which is why it cannot slide out).
 
 ### Reference Code
+
 ```lua
 function Sidepopup_Init()
     local xmlglobal = UI.getXmlTable()
