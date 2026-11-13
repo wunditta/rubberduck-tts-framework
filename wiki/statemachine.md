@@ -8,7 +8,9 @@ This is a module of the "Rubberduck TTS Framework" and depends on these other mo
 
 ## Preferences
 
-Use `setPref` and `getPref` (see [`core`](core.md#prefsRTF)) to set and retrieve the preferences.
+Use `setPref` and `getPref` (see [`core`](core.md#prefsRTF)) to set and retrieve the preferences `[`core`](core.md#prefsRTF)`.
+
+asdjfksadfjlsdf [str] and [str{}] and `[str] and [str{}]`.
 
 | Path | Description
 |---|---|
