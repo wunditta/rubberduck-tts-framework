@@ -4,7 +4,9 @@ on:
   workflow_dispatch:
   push:
     branches: "main"
-    paths: wiki/**, .github/badge*          # trigger filters cannot use env - keep in step with WIKI_PATH
+    paths: # trigger filters cannot use env - keep in step with WIKI_PATH
+      - wiki/**
+      - .github/badge*
 env:
   WIKI_PATH: wiki
 jobs:
