@@ -210,7 +210,7 @@ def pad_table(lines):
         have = text_width(re.sub(r"[*_`]", "", text), 16)       # the header text at GitHub's body size (bold: roughly)
         if widest <= have:
             continue
-        n = int((widest - have) / (16 * 0.28)) + 2
+        n = int((widest - have) / (16 * 0.28)) + 3
         half = "&nbsp;" * ((n + 1) // 2)
         head[i] = " " + half + text + half + " "
     lines[0] = "|".join(head)
