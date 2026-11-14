@@ -6,11 +6,156 @@ This and many other modules are designed to allow addons to be loaded into the g
 
 This is a module of the "Rubberduck TTS Framework" and depends on these other modules: [**`core`**](core.md) [**`dialog`**](dialog.md)
 
+## Core Concept - How the State Machine works<a name="flowcontrol"></a>
+
+### Principles
+* Like all state machines only one state is the "current state" at any given time, and only one state can run at any given time.
+* This state machine can be in sleep mode, where no state is running and the SM waits to be started again.
+* Immediately after a state has finished the state is advanced. So in sleep mode the current state is the one which will be run if the SM is resumed. Therefore the "current state" is:
+  * Active: If the state is running.
+  * Pending: If the SM is asleep (does not run). The current state is run the next time the SM is triggered.
+* Each state defines the next state to be run. For a mostly linear default flow, or to utilize preset parameters for each state, it is possible to define the flow upfront (`FlowSM`).
+
+### State Parameters<a name="stateinfo"></a>
+The following parameters are central for the SM and hold the state info and info how the SM should advance.
+* **`prev`** [str]: The id (name) of the previously run state (may not follow the order in `FlowSM`), as info only.
+* **`state`** [str]: The id (name) of the current state. It is strongly recommended to **not** set this directly. Always use `setFlowSM` to determine the next state to run.
+* **`next`** [str/num]: The next state to run.
+  * `getStateSM`: As return parameter it will always be a string value, i.e. the state id/name.
+  * `setFlowSM`: To specify the next state to run you can use these options:
+    * "id" [str]: The id/name of the state, i.e. the name of a `FuncsSM` function.
+    * `-1/0/1+` [num]: A positive number will set the corresponding state in `FlowSM`; 0 resets the SM (as if never ran); -1 finishes the SM (no state function will be called by `runSM`).
+    *  **Note**: If you defined the specified state in `FlowSM` with additional parameters (e.g. advance, restart) then those parameters will be used, unless you set them with `setFlowSM` too.
+* **`advance=true`** [bool]: After finishing the current state the SM should advance to the next state (`true`), or keep the current state otherwise (`false`).
+* **`restart=false`** [bool/num]: This defines if the SM should be run again after this state has finished, i.e. after the next state was set the machine is started and will run the next state immediately:
+  * `true/false` [bool]: `true` will always continue, `false` will wait (default).
+  * `1+` [num]: The SM will be started automatically if the current speed is ≥ n, i.e. n is the **minimum** number `flowspeedSM` has to be to restart the SM automatically (in other words: the higher n is, the higher the speed needs to be to run it automatically). (Note: `0` would behave the same way as `true`.)
+* **`onload=false`** [bool]: After a game load the machine continues with the current state. Default is false: after a load the machine waits for a trigger.
+
+| SM Status | State Info | Example
+|---|---|---|
+| Sleep | * `prev`: The previously finished state.<br>* `state`: Id of the current state, i.e. the one which will be run upon trigger.<br>* `next=nil`<br>* `advance=nil`<br>* `restart=nil`<br>* `onload`: true or false depending on settings. | * `prev="init"`<br>* `state="setup"`<br>* `next=nil`<br>* `advance=nil`<br>* `restart=nil`<br>* `onload=true`
+| Running Start | * `prev`: The previously finished state.<br>* `state`: Id of the currently run state.<br>* `next=nil`<br>* `advance=nil`<br>* `restart=nil`<br>* `onload=nil` | * `prev="init"`<br>* `state="setup"`<br>* `next=nil`<br>* `advance=nil`<br>* `restart=nil`<br>* `onload=nil`
+| Running End | * `prev`: The previously finished state.<br>* `state`: Id of the currently run state.<br>* `next`: may be set now<br>* `advance`: may be set now<br>* `restart`: may be set now<br>* `onload`: may be set now | * `prev="init"`<br>* `state="setup"`<br>* `next="dialog"`<br>* `advance=true`<br>* `restart=true`<br>* `onload=false`
+| State ended | The new state is determined (by above set `next`, `advance`, `restart`, and/or `FlowSM`) and the variables are set:<br>* `prev`: The id of the just finished state.<br>* `state`: Id of the now current state.<br>* `next=nil`: is now reset<br>* `advance=nil`: is now reset<br>* `restart=nil`: is now reset<br>* `onload`: may be set now | * `prev="setup"`<br>* `state="dialog"`<br>* `next=nil`<br>* `advance=nil`<br>* `restart=nil`<br>* `onload=false`<br>Next state will be started immediately as `restart` was set to `true` before (`false` would set the SM to sleep).
+
+### Flow Mechanism
+1. The **first time** the game is loaded there is no current state, which is then immediately determined. However, it is **not** run by default (only if `onload=true`). The first state depends on if `FlowSM` is defined:
+    * defined: the first listed state
+    * not defined: A state function `init` must exist, as this becomes the first state now (as `FlowSM` is not defined `onload` defaults to `false` and `init` is not run automatically)
+1. If the game is loaded and the current state is set to be run upon load (`onload=true`) the SM is started, otherwise it will be in sleep mode.
+2. Running the current state with `runSM(speed)`:
+    1. **Before** the state function is started:
+        * the SM is locked (can be checked with `isLockedSM()`) to prevent running multiple states at once.
+        * the `onload` parameter is not needed anymore and set to `nil`.
+    2. The state function (of `FuncsSM`) with the same name as the state is started within a **coroutine**.<br>*(If you are new to this concept: this means the state code runs practically in parallel to the other code, i.e. TTS will also continue to execute the code after the `runSM` call.)*
+3. Within the coroutine the SM waits until the state function has **ended**. Immediately after it ended:
+    1. Sets the **next state** depending on the state parameters (internal: using `advanceStateSM`):
+        * either it was specified within the finished state (with `setFlowSM`)
+        * or by returning a [`flowpresets`](#sm.flowpresets) name
+        * or the next state in `FlowSM` is taken
+        * or the SM is set to finished (permanently ended)
+    2. Unlocks the SM, except if a dialog (module [**dialog**](dialog.md)) is shown, as it should not be possible to trigger the next state before the dialog is closed. In more details this means the SM keeps being locked if:
+        * the state was started from `FlowSM` (if the key "dialog" was used)
+        * calling [`showDLG`](dialog.md#showDLG) within the state to show the dialog
+        * If you start a dialog by your own code then you should use `lockSM` to keep the SM locked while the dialog is open. Upon ending the dialog make sure to use `unlockSM`.
+4. Depending on `restart` the new state may **immediately** be run. It is run:
+    * `true`: in any case
+    * `1+`: if the provided `speed` value (with `runSM`) **≥** `restart` value. The purpose is to provide the players different ways to e.g. setup the game, either in detail with individual choices, or to setup most things with default values and only ask for central choices, or don't ask at all. The state function gets the set speed as parameter to act accordingly.
+ 5. Otherwise the SM ends for now (**sleep mode**) and waits:
+    * to be started again (calling `runSM`) with e.g. the press of a button
+    * upon loading the game if `onload` is true
+
+### Default Flow and More<a name="defaultflow"></a>
+
+```lua
+-- Simple
+FlowSM = {"prepare", {dialog="setup"}, "suggest", "finish"} -- prepare; ask players; place random decks players can change; finish setup
+-- Advanced
+FlowSM = {{name="init", onload=true, restart=true}, {name="custom", restart=1}, "faction", {name="manual", restart=1}, "dialog", "setupboard", {name="mainboard", restart=true, myownparam="foo"}, "cleanup"}
+```
+
+`FlowSM` is a flat list of states with optional preset parameters. It serfes two purposes:
+* Defining a default flow, which is used if a state does not set the next state explicitely
+* Defining preset parameters for flow control or your own
+
+Each element is provided in one of two ways:
+* `"name"`: A string, which is the state name or id (is equal to `{id="name"}`)
+* `{id="name", ...}`: A table with these parameters:
+  * `id`: The state name.
+  * `advance`/`restart`/`onload`: See [state parameters](#stateinfo) for description.
+  * `dialog="panelid"` (requires the [**`dialog`**](dialog.md) module): The state shows this dialog and waits (the SM stops, keeps the current state, and waits for a trigger from one of the dialogs buttons).
+    * It presets `advance=false, restart=false, onload=false`, unless they are stated too.
+    * Ending the dialog: With "OK" the **next** state is called (`advance=true, restart=true`; to immediately run code acting upon the made choices). "Cancel" closes the dialog and stays with the current state and waits again. All this behavior can be changed by setting your own flow parameters (pre-defined in `FlowSM` or during runtime with `setFlowSM`).
+    * For simple cases no function in "FuncsSM" is needed. However, a function can be defined and is called before the dialog is shown (NOTE: Only for special cases. This state code is NOT run within the coroutine (except you define your own) and will run in parallel to the shown dialog. If you want to prepare something before the dialog or do something after, use additional states).
+  * `workflow="phase" or true` (requires the "workflow" module): This depends on how the workflows are implemented. The value is forwarded to the workflow caller function. If only one workflow is defined then "true" will start it, otherwise the value defines which workflow to run. No "FuncsSM" function will be called (even if present).
+  * `text="key"`: The `TextsSM` key if it differs from the state name.
+
+### Exceptions(...)<a name="Exceptions"></a>
+
+General explanation of the concept....
+Similar to current, but flow parameters are set according to severity (equal or higher overrules lower)
+
+* Exceptions: `addExceptionSM(kind, level, text)` — collected while a state runs, evaluated when it returns: `kind="hold"` → the machine waits for a trigger, whatever the speed (the players fix something); an exception that requires a state to run again sets `next` to that state's id; `level="error"|"note"` decides the colour and whether the texts are shown in a dialog or only in the chat *(decide)*. The texts are shown through a callback the dialog module registers (`registerShowSM(fn)`); the machine itself prints nothing. Today's `addUIStateException`, `getUIStateExceptions`, `removeUIStateExit`.
+
+### Flags<a name="flags"></a>
+
+Shoul not be here, but as normal function description in the table
+* Flags: `flagSM(name, value)` / `flagSM(name)` — booleans that survive a load (in the record), cleared by `resetSM` (today's `setUIFlag`/`getUIFlag`, e.g. `cardmats`, `startdeck`, `qm_role`).
+
+### Example
+
+Let's assume the players selected a special option in state A, which requires them to do something manually on the board. Before you continue with the normal setup (state B) you want to check if this was done. There are two options:
+
+**Additional State Function**
+
+Add an additional state function C, which performs the check and continues with B. It is not included in `FlowSM`, but A sets C as next state if the option was chosen, otherwise C is left out.
+
+```lua
+FlowSM = {"A", "B"}
+FuncsSM = {
+  ["A"] = function
+    --...
+    if special_option then setFlowSM{next="C"} end
+    --...
+  end,
+  ["B"] = function --[[...]] end,
+  ["C"] = function
+    --...
+    if check_ok then setFlowSM{next="B", restart=true}
+    else
+      -- error code
+      setFlowSM{advance=false} -- state stays in C until check is OK
+    end
+  end
+}
+```
+
+**Flag and Rerun the same State**
+
+In case you could reuse some code from state A for the check you would not want to copy it to C. Instead set a flag and do not advance the state, so that A is rerun, and because of the flag A knows that now it should perform the check.
+
+```lua
+FuncsSM = {
+  ["A"] = function
+    --...
+    if getFlagSM("special") then
+      -- error code
+      setFlagSM("special", true, false) -- clears the flag
+    end
+    --...
+    if special_option then
+      setFlagSM("special", true) -- sets this flag for current state
+      setFlowSM("A") 
+    end
+  end
+}
+```
+
+
 ## Preferences
 
-Use `setPref` and `getPref` (see [`core`](core.md#prefsRTF)) to set and retrieve the preferences `[`core`](core.md#prefsRTF)`.
-
-asdjfksadfjlsdf [str] and [str{}] and `[str] and [str{}]`.
+Use `setPref` and `getPref` (see [`core`](core.md#prefsRTF)) to set and retrieve the preferences.
 
 | Path | Description
 |---|---|
@@ -50,6 +195,7 @@ The table holding all state functions, i.e. when the SM is triggered the functio
 Parameter given to each function: For convenience a table `{prev=, state=, speed=}` is provided (info taken from `getStateSM` (second return) and the speed parameter from `runSM`.
 
 **Return**
+
 For convenience the flow can be defined with a [`flowpreset`](#sm.flowpresets) as return value (instead of using `setFlowSM`). Also see [`Flow Control`](#flowcontrol).
 
 **Example**
@@ -86,7 +232,7 @@ TextsSM = {
 
 ## Function Summary
 
-| Function | Description | Return | prefsRTF
+| Function | Description | Return | Prefs
 |---|---|---|---|
 | [`addExceptionSM(!!!!!!!!!)`](#addExceptionSM) | Registers an exception (notification, warning, or error) which can display a dialog and may also define how the SM will advance. Also see [Exceptions](#Exceptions). | - | -
 | [`getExceptionSM()`](#getExceptionSM) | Returns 1) the history (exceptions) as table of sub-tables (one for each exception: `{type=, description=, severity=, special=}`), and 2) the highest severity rating of all exceptions. | 1) [tab{}]<br>2) [num] | -
@@ -117,142 +263,6 @@ This should work like todays addUIStateException. Description can mostly taken f
 
 * **``**:
 
-## Flow Control<a name="flowcontrol"></a>
-
-### Principles
-* Like all state machines only one state is the "current state" at any given time, and only one state can run at any given time.
-* This state machine can be in sleep mode, where no state is running and the SM waits to be started again.
-* Immediately after a state has finished the state is advanced (so in sleep mode the current state is the one which will be run if the SM is triggered), therefore the "current state" is:
-  * Active: If the state is running.
-  * Pending: If the SM is asleep (does not run). The current state is run the next time the SM is triggered.
-* Each state defines the next state to run. In addition, for a mostly linear default flow it is possible to define the flow upfront (`FlowSM`).
-
-### State Parameters<a name="stateinfo"></a>
-The following parameters are central for the SM and hold the state info and info how the SM should advance.
-* **`prev`** [str]: The id (name) of the previously run state (may not follow the order in `FlowSM`), as info only.
-* **`state`** [str]: The id (name) of the current state. It is strongly recommended to **not** set this directly. Always use `setFlowSM` to determine the next state to run.
-* **`next`** [str/num]: The next state to run.
-  * `getStateSM`: As return parameter it will always be a string value, i.e. the state id/name.
-  * `setFlowSM`: To specify the next state to run you can use these options:
-    * "id" [str]: The id/name of the state, i.e. the name of a `FuncsSM` function.
-    * `-1/0/1+` [num]: A positive number will set the corresponding state in `FlowSM`; 0 resets the SM (as if never ran); -1 finishes the SM (no state function will be called by `runSM`).
-    *  **Note**: If you defined the specified state in `FlowSM` with additional parameters (e.g. advance, restart) then those parameters will be used, unless you set them with `setFlowSM` too.
-* **`advance=true`** [bool]: After finishing the current state the SM should advance to the next state (`true`), or keep the current state otherwise (`false`).
-* **`restart=false`** [bool/num]: This defines if the SM should be run again after this state has finished, i.e. after the next state was set the machine is started and will run the next state immediately:
-  * `true/false` [bool]: `true` will always continue, `false` will wait (default).
-  * `1+` [num]: The SM will be started automatically if the current speed is ≥ n, i.e. n is the **minimum** number `flowspeedSM` has to be to restart the SM automatically (in other words: the higher n is, the higher the speed needs to be to run it automatically). (Note: `0` would behave the same way as `true`.)
-* **`onload=false`** [bool]: After a game load the machine continues with the current state. Default is false: after a load the machine waits for a trigger.
-
-| SM Status | State Info | Example
-|---|---|---|
-| Sleep | * `prev`: The previously finished state.<br>* `state`: Id of the current state, i.e. the one which will be run upon trigger.<br>* `next=nil`<br>* `advance=nil`<br>* `restart=nil`<br>* `onload`: true or false depending on settings. | * `prev="init"`<br>* `state="setup"`<br>* `next=nil`<br>* `advance=nil`<br>* `restart=nil`<br>* `onload=true`
-| Running Start | * `prev`: The previously finished state.<br>* `state`: Id of the currently run state.<br>* `next=nil`<br>* `advance=nil`<br>* `restart=nil`<br>* `onload=nil` | * `prev="init"`<br>* `state="setup"`<br>* `next=nil`<br>* `advance=nil`<br>* `restart=nil`<br>* `onload=nil`
-| Running End | * `prev`: The previously finished state.<br>* `state`: Id of the currently run state.<br>* `next`: may be set now<br>* `advance`: may be set now<br>* `restart`: may be set now<br>* `onload`: may be set now | * `prev="init"`<br>* `state="setup"`<br>* `next="dialog"`<br>* `advance=true`<br>* `restart=true`<br>* `onload=false`
-| State ended | The new state is determined (by above set `next`, `advance`, `restart`, and/or `FlowSM`) and the variables are set:<br>* `prev`: The id of the just finished state.<br>* `state`: Id of the now current state.<br>* `next=nil`: is now reset<br>* `advance=nil`: is now reset<br>* `restart=nil`: is now reset<br>* `onload`: may be set now | * `prev="setup"`<br>* `state="dialog"`<br>* `next=nil`<br>* `advance=nil`<br>* `restart=nil`<br>* `onload=false`<br>Next state will be started immediately as `restart` was set to `true` before (`false` would set the SM to sleep).
-
-### Flow Mechanism
-1. If the game is loaded and the current state is set to be run upon load (`onload=true`) the SM is started, otherwise it will be in sleep mode.
-2. Running the current state with `runSM(speed)`:
-    * The **first time** the SM is started there is no current state. If `FlowSM`is
-      * defined: the first state from it is run
-      * not defined: A state function `init`must exist as this one is called.
-    * **Before** the state function is started:
-      * the SM is locked (can be checked with `isLockedSM()`) to prevent running multiple states at once.
-      * the `onload` parameter is not needed anymore and set to `nil`.
-    * The state function (`FuncsSM`) is started within a **coroutine**. *(If you are new to this concept: this means the state code runs practically in parallel to the other code, i.e. TTS will also continue to execute the code after the `runSM` call.)*
-3. Within the coroutine the SM waits until the state function has **ended**. Immediately after it ended:
-    1. Sets the **next state** depending on the state parameters (using `advanceStateSM`):
-        * either it was specified within the finished state (with `setFlowSM`)
-        * or by returning a [`flowpresets`](#sm.flowpresets) name
-        * or the next state in `FlowSM` is taken
-        * or the SM is set to finished (permanently ended)
-    2. Unlocks the SM, unless a dialog is shown (see module [**dialog**](dialog.md)), as it should not be possible to trigger the next state before the dialog is closed. The SM keeps being locked if:
-        * If the state was started with `FlowSM` defaults (if the key "dialog" was used)
-        * Calling [`showDLG`](dialog.md#showDLG) within the state to show the dialog
-        * If you start a dialog by your own code then you should use `lockSM` to keep the SM locked while the dialog is open. Upon ending the dialog make sure to use `unlockSM`.
-4. If `restart` is enabled the next state may **immediately** be run:
-    * `true`: is run in any case
-    * `1+`: if the provided `speed` value (with `runSM`) ≥ `restart` value. The purpose is to provide two possibilities for the players to e.g. setup the game with individual choices, or to setup most things with default values and only ask for central choices, or none at all. The state function gets the set speed as parameter to act accordingly.
- 5. Otherwise the SM ends for now (**sleep mode**) and waits:
-    * to be started again (calling `runSM`) with e.g. the press of a button
-    * upon loading the game if `onload` is true
-
-### Default Flow<a name="defaultflow"></a>
-
-```lua
-FlowSM = {{name="init", onload=true, restart=true}, {name="custom", restart=1}, "faction", {name="manual", restart=1}, "dialog", "setupboard", {name="mainboard", restart=true}, "cleanup"}
-```
-
-The default flow is specified in "FlowSM", which is a list of the states in order. Each element is provided in one of two ways:
-* `"name"`: A string, which is the state name or id (is equal to `{id="name"}`)
-* `{id="name", ...}`: A table with these parameters:
-  * `id`: The state name.
-  * `advance`/`restart`/`onload`: See [state parameters](#stateinfo) for description.
-  * `dialog="panelid"` (requires the "dialog" module): The state shows this dialog and waits (SM stops, keeps the current state, and waits for a trigger from one of the dialogs buttons). If "OK" the next state becomes the current and the SM is called (as normally something should happen after a dialog was confirmed). "Cancel" closes the dialog, stays with the current state and waits again). For simple cases no function in "FuncsSM" is needed. However, a function can be defined and is called before the dialog is shown (so things happen in the background while the dialog is shown).
-  * `workflow="phase" or true` (requires the "workflow" module): This depends on how the workflows are implemented. The value is forwarded to the workflow caller function. If only one workflow is defined then "true" will start it, otherwise the value defines which workflow to run. No "FuncsSM" function will be called (even if present).
-  * `text="key"`: The `TextsSM` key if it differs from the state name.
-
-### Exceptions(...)<a name="Exceptions"></a>
-
-General explanation of the concept....
-Similar to current, but flow parameters are set according to severity (equal or higher overrules lower)
-
-* Exceptions: `addExceptionSM(kind, level, text)` — collected while a state runs, evaluated when it returns: `kind="hold"` → the machine waits for a trigger, whatever the speed (the players fix something); an exception that requires a state to run again sets `next` to that state's id; `level="error"|"note"` decides the colour and whether the texts are shown in a dialog or only in the chat *(decide)*. The texts are shown through a callback the dialog module registers (`registerShowSM(fn)`); the machine itself prints nothing. Today's `addUIStateException`, `getUIStateExceptions`, `removeUIStateExit`.
-
-### Flags<a name="flags"></a>
-
-Shoul not be here, but as normal function description in the table
-* Flags: `flagSM(name, value)` / `flagSM(name)` — booleans that survive a load (in the record), cleared by `resetSM` (today's `setUIFlag`/`getUIFlag`, e.g. `cardmats`, `startdeck`, `qm_role`).
-
-### Example
-
-Let's assume the players selected a special option in state A, which requires them to do something manually on the board. Before you continue with the normal setup (state B) you want to check if this was done. There are two options:
-
-#### Additional State Function
-
-Add an additional state function C, which performs the check and continues with B. It is not included in `FlowSM`, but A sets C as next state if the option was chosen, otherwise C is left out.
-
-```lua
-FlowSM = {"A", "B"}
-FuncsSM = {
-  ["A"] = function
-    --...
-    if special_option then setFlowSM{next="C"} end
-    --...
-  end,
-  ["B"] = function --[[...]] end,
-  ["C"] = function
-    --...
-    if check_ok then setFlowSM{next="B", restart=true}
-    else
-      -- error code
-      setFlowSM{advance=false} -- state stays in C until check is OK
-    end
-  end
-}
-```
-
-#### Flag and Rerun the same State
-
-In case you could reuse some code from state A for the check you would not want to copy it to C. Instead set a flag and do not advance the state, so that A is rerun, and because of the flag A knows that now it should perform the check.
-
-```lua
-FuncsSM = {
-  ["A"] = function
-    --...
-    if getFlagSM("special") then
-      -- error code
-      setFlagSM("special", true, false) -- clears the flag
-    end
-    --...
-    if special_option then
-      setFlagSM("special", true) -- sets this flag for current state
-      setFlowSM("A") 
-    end
-  end
-}
-```
-
 
 # Internal
 
@@ -261,14 +271,14 @@ FuncsSM = {
 | Variable | Description | Type
 |---|---|---|
 | `lockedSM` | Is true if the SM is running, otherwise false (is used for `isRunningSM`). | [bool]
-| `persistSM` | A **persistent** [(see module **core**)](core.md#PersistentDataRTF) table to store data for the SM. | [tab]
+| `persistSM` | A **persistent** [(see module **core**)](core.md#persistentDataRTF) table to store data for the SM. | [tab]
 | [`persistSM.state = {prev, state, next, advance, restart, onload}`](#persistSM.state) | All info for the current state. | [tab]
 
 ### persistSM.state<a name="persistSM.state"></a>
 
 ## Function Summary
 
-| Function | Description | Return | prefsRTF
+| Function | Description | Return | Prefs
 |---|---|---|---|
 | `advanceStateSM(speed [num])` | The code actually determining the next state (and may also call runSM() if restart~=false). It needs to be a separate function as it is called by runSM() after a state is finished and by a dialog when pressing OK. | - | -
 | `onSaveLoadFuncsRTF.statemachine(event [str])` | Runs the the SM if the current state has `onload=true` (the function has `onSaveLoadFuncsRTF.order.statemachine = 190`). | - | -

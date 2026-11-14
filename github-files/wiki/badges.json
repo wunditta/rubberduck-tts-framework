@@ -1,0 +1,102 @@
+{
+    "//": "Keys starting with // are comments and are ignored. An empty string \"\" means: inherit. Trailing commas are tolerated.",
+
+    "//global": "Settings for the page and between badges (cannot be set per type).",
+    "global": {
+        "//dir": "Folder inside the wiki that receives the generated SVG files.",
+        "dir": "badges",
+        "//align": "Vertical alignment of a badge in the text line (<img align>): baseline, middle, absmiddle, absbottom, texttop, top, bottom.",
+        "align": "absmiddle",
+        "//height": "Height of a badge in px (GitHub's body text is 16 px); everything else scales with it.",
+        "height": 14,
+        "//codeHeight": "Height inside a code span (GitHub renders code at 85 %); set equal to height for one size everywhere.",
+        "codeHeight": 14,
+        "font": "Verdana, DejaVu Sans, sans-serif",
+        "//fontSize": "Text size as a multiple of the badge height.",
+        "fontSize": 0.8,
+        "//baseline": "Baseline below the badge centre as a multiple of the text size (centres the x-height).",
+        "baseline": 0.37,
+        "//radius": "Corner radius as a multiple of the height (0 = square corners).",
+        "radius": 0.25,
+        "//padding": "Space between the badge edge and the text, as a multiple of the height.",
+        "padding": 0.16,
+        "//altGap": "Between the badges of alternatives ([str/num]); a gap that is only white space is dropped inside code spans (monospace would show it as a full space). &vert; or / are visible alternatives.",
+        "altGap": "&vert;",
+        "//tableMinWidth": "A table column of badge-only cells gets its header widened so the column cannot shrink the images.",
+        "tableMinWidth": true,
+        "//only_named_badges": "true: a [name] becomes a badge only if the name is listed in colors_per_badge. false: every [name] becomes a badge (of type default or other if named there).",
+        "only_named_badges": true,
+        "//strict_name_check": "false: a name is letters, digits, _ . -; other characters before/after it are decoration kept in the badge text ([str++] is a str badge reading str++), / separates alternatives, (...) groups them. true: everything between [ ] is the name as written, / and () have no meaning, so str{} must be listed itself.",
+        "strict_name_check": false,
+    },
+
+    "//defaults": "Settings every badge inherits; a type (type_specs) may override any of them.",
+    "defaults": {
+        "textColor": "#000000",
+        "//color": "Background colour of a badge whose name has no entry in colors_per_badge.",
+        "color": "#888888",
+        "//scale": "Size factor: the badge is height * scale (codeHeight * scale in code spans) high.",
+        "scale": 1,
+        "//shift": "Fine positioning as a multiple of the height: positive moves the badge up, negative down.",
+        "shift": -0.05,
+        "//codeShift": "The same inside code spans (default: shift).",
+        "codeShift": -0.05,
+        "//badgesInCodeSpans": "Tokens inside `code spans` become badges too (fenced code blocks never).",
+        "badgesInCodeSpans": true,
+        "//icon": "SVG file next to this json (empty double quotes = no icon), see README. rotate in degrees; height, padding (left of the icon) and gap (between icon and text) as multiples of the badge height; color applies only if the SVG uses currentColor.",
+        "icon": {
+            "name": "",
+            "rotate": 0,
+            "height": 0.84,
+            "padding": 0.2,
+            "gap": 0.12,
+            "color": ""
+        }
+    },
+
+    "//type_specs": "Badge types. 'default' ([name] tokens) and 'file' (page links [**name**](name.md)) always exist; add any other type as a group of names with their own settings. A name belongs to the first type that lists it in colors_per_badge.",
+    "type_specs": {
+        "default": {
+        },
+        "file": {
+            "scale": 1.4,
+            "shift": 0.1,
+            "color": "#ececec",
+            "icon": {
+                "name": "module-icon.svg",
+                "rotate": 90,
+                "color": "#e5cc4c"
+            }
+        }
+    },
+
+    "//colors_per_badge": "Background colour per badge name, grouped by type. Names under 'file' are page names.",
+    "colors_per_badge": {
+        "default": {
+            "str": "#BDCFAF",
+            "num": "#DDA6A1",
+            "int": "#DDA6A1",
+            "float": "#DDA6A1",
+            "bool": "#CBB3BE",
+            "nil": "#7F7F7F",
+            "any": "#e0e270",
+            "var": "#e0e270",
+            "tab": "#c1c1c1",
+            "func": "#E07551",
+            "obj": "#B6C3E1",
+            "guid": "#B6C3E1",
+            "vec": "#f4d29a",
+            "col": "#e2bae0",
+            "player": "#b5e1e5",
+        },
+        "file": {
+            "addons": "#89790F",
+            "core": "#666666",
+            "dev": "#000000",
+            "dialog": "#AD1E50",
+            "object": "#1445B7",
+            "statemachine": "#1489B7",
+            "workflow": "#78B313",
+        }
+    }
+}

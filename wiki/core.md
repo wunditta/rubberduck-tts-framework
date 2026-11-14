@@ -6,13 +6,15 @@ This and many other modules are designed to allow addons to be loaded into the g
 
 This is a module of the "Rubberduck TTS Framework" with basic functions, so all other modules of the framework depend on.
 
+## Core Concepts
+
 ## Member Variables
 
 | Variable | Description | Type
 |---|---|---|
 | [`boardsRTF={}`](#Places) | A table of base objects for placesRTF, mostly boardsRTF or mats with snap points. Those may have multiple states. | [tab]
 | [`onSaveLoadFuncsRTF={}`](#onSaveLoadFuncsRTF) | A table holding functions to be all run upon game save and load. | [func{}]
-| [`PersistentDataRTF={}`](#PersistentDataRTF) [tab] | A table to store persistent data in (survives save and load). | [tab]
+| [`persistentDataRTF={}`](#persistentDataRTF) [tab] | A table to store persistent data in (survives save and load). | [tab]
 | [`placesRTF={}`](#Places) | A table of keyed items, where the key is the place and the value specifies a snap point, a container, or a zone. | [tab]
 | [`prefsRTF`](#prefsRTF) | A table holding the user settings for the framework | [tab]
 
@@ -28,19 +30,6 @@ It is strongly recommended to use `setPref` and `getPref` to set and get the val
 setPref("getSnapPos.relative", true)
 --prefsRTF.getSnapPos.relative = true  would cause an error as getSnapPos is not defined
 ```
-
-## Function Summary
-
-| Function | Description | Return | prefsRTF
-|---|---|---|---|
-| [`getPersist`](#getPersist) | Retrieves persistent data from `PersistentData` with [`getTable`](#getTable). | [tab] | -
-| [`getPref(path [str/tab])`](#prefsRTF) | Gets a preference with the specified path (either e.g. "opts.players.white", or {"opt", "players", "white"}).
-| [`getTable`](#getTable) | This function gets a value of a key-value table regardless on which nested level. This is an alternative to a[k1][k2], or a.k1.k2, but avoids an error if any nest key is nil. | [tab] | -
-| [`onSaveLoadFuncsRTF={order={persistent=0}, persistent=func(event [str])}`](#onSaveLoadFuncsRTF) | A table holding functions to be all run upon game save and load. Add your own functions if you need to run code then. | [func{}] | -
-| [`regPersistentData(varname [str])`](#addPersistentKey) | Register a variable to be persistent over saving and loading (otherwise the value is lost). | - | -
-| [`setPersist`](#setPersist) | Retrieves persistent data from `Opts` with [`setTable`](#setTable). | [tab] | -
-| [`setPref(path [str/tab], value [any])`](#prefsRTF) | Sets a preference with the specified path (either e.g. "opts.players.white", or {"opt", "players", "white"}). For built-in functions the first level is the function name, the second the key. For your own purpose use a unique first level key. To **delete** a preference specify the value as `nil`.
-| [`setTable(tgt [any{}], src [any/any{}], keys [str{}], insert [bool/num])`](#setTable) | Sets a value into a key-value table regardless on which nested level with different options how the value(s) are joined with existing values for flat lists. | [tab] | -
 
 ### onSaveLoadFuncsRTF<a name="onSaveLoadFuncsRTF"></a>
 
@@ -72,6 +61,20 @@ end
 onSaveLoadFuncsRTF.order.myFunction = "10"
 ```
 
+## Function Summary
+
+| Function | Description | Return | Prefs
+|---|---|---|---|
+| [`getPersist`](#getPersist) | Retrieves persistent data from `persistentData` with [`getTable`](#getTable). | [tab] | -
+| [`getPref(path [str/tab])`](#prefsRTF) | Gets a preference with the specified path (either e.g. "opts.players.white", or {"opt", "players", "white"}).
+| [`getTable`](#getTable) | This function gets a value of a key-value table regardless on which nested level. This is an alternative to a[k1][k2], or a.k1.k2, but avoids an error if any nest key is nil. | [tab] | -
+| [`onSaveLoadFuncsRTF={order={persistent=0}, persistent=func(event [str])}`](#onSaveLoadFuncsRTF) | A table holding functions to be all run upon game save and load. Add your own functions if you need to run code then. | [func{}] | -
+| [`regPersistentData(varname [str])`](#addPersistentKey) | Register a variable to be persistent over saving and loading (otherwise the value is lost). | - | -
+| [`setPersist`](#setPersist) | Retrieves persistent data from `Opts` with [`setTable`](#setTable). | [tab] | -
+| [`setPref(path [str/tab], value [var])`](#prefsRTF) | Sets a preference with the specified path (either e.g. "opts.players.white", or {"opt", "players", "white"}). For built-in functions the first level is the function name, the second the key. For your own purpose use a unique first level key. To **delete** a preference specify the value as `nil`.
+| [`setTable(tgt [var{}], src [var/var{}], keys [str{}], insert [bool/num])`](#setTable) | Sets a value into a key-value table regardless on which nested level with different options how the value(s) are joined with existing values for flat lists. | [tab] | -
+
+
 ### setTable(...)<a name="setTable"></a>
 Sets or joins one or multiple values into a table and returns the final table. This is rather a complex function (which lies in the nature of the complexity to join tables), but also powerful. The major concepts are:
 * MULTI Assignment: You can assign multiple values to multiple keys (within the same table) at once.
@@ -80,8 +83,8 @@ Sets or joins one or multiple values into a table and returns the final table. T
 **Parameters**
 
 * **`tgt`** [tab]: The table to be changed (is changed as it is given as reference)
-* **`src`** [any]: The value to be set into the table. Use value "nil" (with insert=nil) to remove a nested table. Use "{}" to create an empty nested table. The default behavior is that existing keys are replaced with val, new keys are created and val is assigned. This can be changed with "insert"
-* **`src{}`** [any{}]: MULTI assignment: If you provide multiple values as flat table (no key-val), you can set values to multiple keys at once. The last key in "keys" MUST be a table (see examples "g"). All those keys are getting assigned the corresponding value form the "val" table. AUTOREPEAT: If there are less values than keys, the last value will be assigned to the remaining keys (see examples "f" and "h"), except if insert=4 or 6. Note: val={1}/key={"a","b","c"} will fill {"a","b","c"} with {1,1,1}, but if val={nil,1}, then it will fill with {nil,1,1}
+* **`src`** [var]: The value to be set into the table. Use value "nil" (with insert=nil) to remove a nested table. Use "{}" to create an empty nested table. The default behavior is that existing keys are replaced with val, new keys are created and val is assigned. This can be changed with "insert"
+* **`src{}`** [var{}]: MULTI assignment: If you provide multiple values as flat table (no key-val), you can set values to multiple keys at once. The last key in "keys" MUST be a table (see examples "g"). All those keys are getting assigned the corresponding value form the "val" table. AUTOREPEAT: If there are less values than keys, the last value will be assigned to the remaining keys (see examples "f" and "h"), except if insert=4 or 6. Note: val={1}/key={"a","b","c"} will fill {"a","b","c"} with {1,1,1}, but if val={nil,1}, then it will fill with {nil,1,1}
 * **`keys`** [str{}]: Any number of keys (at least 1) as table, where each subsequent key defines a nested table of the key before. NOTE: If you pass keys as variable it is overwritten by the function. To prevent this pass a copy (see table.copy).
 * **`keys`** [str]: Alternatively to a key list you can specify a key path as string, e.g. "opts.players.white".
 * **`keys=nil`**: If keys is nil then var must be a flat array (no key=val pairs, just values). val will be inserted as specified by insert.
@@ -155,16 +158,16 @@ Examples are grouped with the number of the insert mode. Examples with the same 
 
 | Variable | Description | Type
 |---|---|---|
-| [`PersistentDataVarsRTF={"PersistentDataRTF"}`](#PersistentDataRTF) | A table with the names of all variables which should be persistent data. Therefore all variables to be stored persistently must have different names. | table
+| [`persistentDataVarsRTF={"persistentDataRTF"}`](#persistentDataRTF) | A table with the names of all variables which should be persistent data. Therefore all variables to be stored persistently must have different names. | table
 
 ## Function Summary
 
-| Function | Description | Return | prefsRTF
+| Function | Description | Return | Prefs
 |---|---|---|---|
 | [`argsRTF(params [tab], specs [tab], noset [bool/tab], name [str])`](#argsRTF) | A helper function used by most functions to normalize the given parameters as table with honoring `prefsRTF`. | [tab] | -
 | `onLoad` | This function is <a href="https://api.tabletopsimulator.com/events/#onload">called by TTS automatically</a>. It runs all `onSaveLoadFuncsRTF` with the parameter "load". | - | -
 | `onSave` | This function is <a href="https://api.tabletopsimulator.com/events/#onsave">called by TTS automatically</a>. It runs all `onSaveLoadFuncsRTF` with the parameter "save". The return value of `persistent` is the hardcoded return value for `onSave`. | - | -
-| [`onSaveLoadFuncsRTF.persistent`](#PersistentDataRTF) | Saves and loads the whole table `PersistentDataRTF` JSON encoded. | - | -
+| [`onSaveLoadFuncsRTF.persistent`](#persistentDataRTF) | Saves and loads the whole table `persistentDataRTF` JSON encoded. | - | -
 
 ### argsRTF(...)<a name="argsRTF"></a>
 
@@ -179,7 +182,7 @@ The value of a paramter is determined by: provided value >>> `prefsRTF.<name>.<p
 
 **Parameters**
 
-* **`params`** [any/tab]: The parameter for the function as single parameter of any type, or as keyless list, or as keyed table.
+* **`params`** [var/tab]: The parameter for the function as single parameter of any type, or as keyless list, or as keyed table.
 * **`specs`** [tab]: Holds two things:
   * The keys for the parameters as flat list (in the order they should be provided)
   * The default values as keyed items
@@ -198,19 +201,19 @@ function getSnapPos(p)
     -- getSnapPos(1) would result in p = {sid=1, obj=Global, relative=false, offset={x=2}}
 ```
 
-### PersistentDataRTF<a name="PersistentDataRTF"></a>
+### persistentDataRTF<a name="persistentDataRTF"></a>
 
 #### onSaveLoadFuncsRTF.persistent
 
-TTS does not save variables by default. The function `onSaveLoadFuncsRTF.persistent` combines all variables in `PersistentDataVarsRTF` to one table (value is also key, e.g. ["PersistentDataRTF"]=PersistentDataRTF), JSON encodes it and returns it. `onSave` uses this return values as its hardcoded return value. `onLoad` does the reverse and restores all variables.
+TTS does not save variables by default. The function `onSaveLoadFuncsRTF.persistent` combines all variables in `persistentDataVarsRTF` to one table (value is also key, e.g. ["persistentDataRTF"]=persistentDataRTF), JSON encodes it and returns it. `onSave` uses this return values as its hardcoded return value. `onLoad` does the reverse and restores all variables.
 
-#### PersistentDataRTF
+#### persistentDataRTF
 
-The table `PersistentDataRTF` is provided by default to store persistent data. It does not have data by default. For different purposes it is recommended to use separate sub-keys (e.g. `PersistentDataRTF.MyPlayers` for player related data). 
+The table `persistentDataRTF` is provided by default to store persistent data. It does not have data by default. For different purposes it is recommended to use separate sub-keys (e.g. `persistentDataRTF.MyPlayers` for player related data). 
 
 #### regPersistentData(...)<a name="addPersistentKey"></a>
 
-`PersistentDataRTF` is provided by default. For different purposes (or already existing code) you may want to make other variables also persistent. Use this function to register additional variables, which should be saved and loaded automatically. Some modules (e.g. **dialog**, **statemachine**) also use this with their own permanent variables, so you might want to check not to use one of those.
+`persistentDataRTF` is provided by default. For different purposes (or already existing code) you may want to make other variables also persistent. Use this function to register additional variables, which should be saved and loaded automatically. Some modules (e.g. **dialog**, **statemachine**) also use this with their own permanent variables, so you might want to check not to use one of those.
 
 **Parameters**
 
