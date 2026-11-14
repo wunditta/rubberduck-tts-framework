@@ -1,0 +1,36 @@
+# .github/workflows/wiki_badges.yml
+# Publishes the pages in the folder "wiki" to this repository's wiki.
+name: Publish wiki
+
+on:
+  push:
+    branches: [main]
+    paths:                        # run only when something relevant changed
+      - "wiki/**"
+      - ".github/wiki_badges/**"             # badges.json and the icon files
+      - ".github/workflows/wiki_badges.yml"
+  workflow_dispatch:              # manual start from the Actions tab ("Run workflow")
+    inputs:
+      force:
+        description: "Overwrite the wiki even if it was edited online (needed for the very first publish)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write                 # the default token may push to the wiki with this
+
+concurrency:                      # never two publishes at the same time
+  group: wiki
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: wunditta/publish-wiki-badges-action@v1
+        with:
+          path: wiki                               # folder with the pages (default)
+          badges: .github/wiki_badges              # folder with badges.json and the icons; remove this line to publish without badges
+          force: ${{ inputs.force || false }}      # from the manual trigger; false on a push
