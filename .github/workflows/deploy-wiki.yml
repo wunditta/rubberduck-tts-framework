@@ -15,7 +15,7 @@ jobs:
       contents: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Expand badges and shorthands # written by Claude & wunditta
         run: python3 .github/badges.py "$WIKI_PATH"
       - uses: actions4gh/configure-wiki@v1
