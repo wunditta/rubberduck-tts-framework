@@ -1,0 +1,33 @@
+name: Publish wiki
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "wiki/**"
+      - ".github/wiki/**"
+      - ".github/workflows/wiki.yml"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Overwrite the wiki even if it was edited online (needed for the very first publish)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: wiki
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: wunditta/publish-wiki-badges-action@v1.0.0
+        with:
+          path: wiki
+          badges: .github/wiki
+          force: ${{ inputs.force || false }}
